@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getPortfolioContent, savePortfolioContent } from "@/lib/storage";
+import { getPortfolioContentAsync, savePortfolioContentAsync } from "@/lib/storage";
 import { TestimonialItem } from "@/types/portfolio";
 
 export async function GET() {
   try {
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     return NextResponse.json({
       success: true,
       data: content.testimonials || [],
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
 
     if (!newItem.id) {
       newItem.id = "testi-" + Date.now();
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     content.testimonials = [newItem, ...(content.testimonials || [])];
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -79,7 +79,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const list = content.testimonials || [];
     const index = list.findIndex((t) => t.id === updatedItem.id);
 
@@ -103,7 +103,7 @@ export async function PUT(request: Request) {
     };
     content.testimonials = list;
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -130,7 +130,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const initialLen = (content.testimonials || []).length;
     content.testimonials = (content.testimonials || []).filter((t) => t.id !== id);
 
@@ -141,7 +141,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,

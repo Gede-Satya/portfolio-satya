@@ -8,6 +8,7 @@ import {
   testimonialsData,
 } from "@/data/portfolioData";
 import { ProjectItem, SkillItem, TimelineItem, TestimonialItem } from "@/types/portfolio";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export interface ContactMessage {
   id: string;
@@ -79,8 +80,21 @@ const MESSAGES_FILE = path.join(DATA_DIR, "messages.json");
 const AUTH_FILE = path.join(DATA_DIR, "admin-auth.json");
 
 function ensureDirectoryExistence() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+  } catch (error) {
+    // Read-only filesystem in serverless environments
+  }
+}
+
+function safeWriteFile(filePath: string, content: string): void {
+  try {
+    ensureDirectoryExistence();
+    fs.writeFileSync(filePath, content, "utf-8");
+  } catch (error) {
+    console.warn(`Filesystem write skipped for ${filePath}:`, error);
   }
 }
 
@@ -270,13 +284,66 @@ export function getPortfolioContent(): PortfolioContent {
 }
 
 export function savePortfolioContent(content: PortfolioContent): void {
-  ensureDirectoryExistence();
-  fs.writeFileSync(CONTENT_FILE, JSON.stringify(content, null, 2), "utf-8");
+  safeWriteFile(CONTENT_FILE, JSON.stringify(content, null, 2));
 }
 
 export function resetToDefaultContent(): PortfolioContent {
   const defaultData = getDefaultContent();
   savePortfolioContent(defaultData);
+  return defaultData;
+}
+
+export async function getPortfolioContentAsync(): Promise<PortfolioContent> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("portfolio_content")
+        .select("content")
+        .eq("id", "main")
+        .single();
+
+      if (!error && data?.content) {
+        return data.content as PortfolioContent;
+      }
+
+      // If table is empty or row does not exist, seed with local content
+      const localContent = getPortfolioContent();
+      await supabase.from("portfolio_content").upsert({
+        id: "main",
+        content: localContent,
+        updated_at: new Date().toISOString(),
+      });
+      return localContent;
+    } catch (err) {
+      console.warn("Supabase fetch portfolio error, falling back to local:", err);
+    }
+  }
+
+  return getPortfolioContent();
+}
+
+export async function savePortfolioContentAsync(content: PortfolioContent): Promise<void> {
+  safeWriteFile(CONTENT_FILE, JSON.stringify(content, null, 2));
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { error } = await supabase.from("portfolio_content").upsert({
+        id: "main",
+        content,
+        updated_at: new Date().toISOString(),
+      });
+      if (error) {
+        console.error("Supabase upsert portfolio error:", error);
+      }
+    } catch (err) {
+      console.error("Supabase save portfolio exception:", err);
+    }
+  }
+}
+
+export async function resetToDefaultContentAsync(): Promise<PortfolioContent> {
+  const defaultData = getDefaultContent();
+  await savePortfolioContentAsync(defaultData);
   return defaultData;
 }
 
@@ -294,7 +361,7 @@ export function getMessages(): ContactMessage[] {
         read: false,
       },
     ];
-    fs.writeFileSync(MESSAGES_FILE, JSON.stringify(sampleMessages, null, 2), "utf-8");
+    safeWriteFile(MESSAGES_FILE, JSON.stringify(sampleMessages, null, 2));
     return sampleMessages;
   }
 
@@ -308,8 +375,91 @@ export function getMessages(): ContactMessage[] {
 }
 
 export function saveMessages(messages: ContactMessage[]): void {
-  ensureDirectoryExistence();
-  fs.writeFileSync(MESSAGES_FILE, JSON.stringify(messages, null, 2), "utf-8");
+  safeWriteFile(MESSAGES_FILE, JSON.stringify(messages, null, 2));
+}
+
+export async function getMessagesAsync(): Promise<ContactMessage[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("contact_messages")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        return data.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          subject: item.subject,
+          message: item.message,
+          createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+          read: Boolean(item.read),
+        }));
+      }
+    } catch (err) {
+      console.warn("Supabase messages fetch error, fallback to local:", err);
+    }
+  }
+
+  return getMessages();
+}
+
+export async function saveMessageAsync(message: ContactMessage): Promise<void> {
+  const current = getMessages();
+  saveMessages([message, ...current]);
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from("contact_messages").insert({
+        id: message.id,
+        name: message.name,
+        email: message.email,
+        subject: message.subject,
+        message: message.message,
+        created_at: message.createdAt,
+        read: message.read,
+      });
+    } catch (err) {
+      console.error("Supabase insert message error:", err);
+    }
+  }
+}
+
+export async function updateMessageReadAsync(id: string, read: boolean): Promise<void> {
+  const current = getMessages();
+  const idx = current.findIndex((m) => m.id === id);
+  if (idx !== -1) {
+    current[idx].read = read;
+    saveMessages(current);
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase
+        .from("contact_messages")
+        .update({ read })
+        .eq("id", id);
+    } catch (err) {
+      console.error("Supabase update message error:", err);
+    }
+  }
+}
+
+export async function deleteMessageAsync(id: string): Promise<void> {
+  const current = getMessages().filter((m) => m.id !== id);
+  saveMessages(current);
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase
+        .from("contact_messages")
+        .delete()
+        .eq("id", id);
+    } catch (err) {
+      console.error("Supabase delete message error:", err);
+    }
+  }
 }
 
 export function getAdminCredentials(): { username: string; passwordHash: string } {
@@ -319,7 +469,7 @@ export function getAdminCredentials(): { username: string; passwordHash: string 
       username: "admin",
       passwordHash: "admin123",
     };
-    fs.writeFileSync(AUTH_FILE, JSON.stringify(defaultAuth, null, 2), "utf-8");
+    safeWriteFile(AUTH_FILE, JSON.stringify(defaultAuth, null, 2));
     return defaultAuth;
   }
 
@@ -332,6 +482,54 @@ export function getAdminCredentials(): { username: string; passwordHash: string 
 }
 
 export function updateAdminCredentials(username: string, passwordHash: string): void {
-  ensureDirectoryExistence();
-  fs.writeFileSync(AUTH_FILE, JSON.stringify({ username, passwordHash }, null, 2), "utf-8");
+  safeWriteFile(AUTH_FILE, JSON.stringify({ username, passwordHash }, null, 2));
+}
+
+export async function getAdminCredentialsAsync(): Promise<{ username: string; passwordHash: string }> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from("admin_auth")
+        .select("username, password_hash")
+        .eq("id", "admin")
+        .single();
+
+      if (!error && data) {
+        return {
+          username: data.username,
+          passwordHash: data.password_hash,
+        };
+      }
+
+      const localAuth = getAdminCredentials();
+      await supabase.from("admin_auth").upsert({
+        id: "admin",
+        username: localAuth.username,
+        password_hash: localAuth.passwordHash,
+        updated_at: new Date().toISOString(),
+      });
+      return localAuth;
+    } catch (err) {
+      console.warn("Supabase admin auth error:", err);
+    }
+  }
+
+  return getAdminCredentials();
+}
+
+export async function updateAdminCredentialsAsync(username: string, passwordHash: string): Promise<void> {
+  updateAdminCredentials(username, passwordHash);
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.from("admin_auth").upsert({
+        id: "admin",
+        username,
+        password_hash: passwordHash,
+        updated_at: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error("Supabase update admin error:", err);
+    }
+  }
 }

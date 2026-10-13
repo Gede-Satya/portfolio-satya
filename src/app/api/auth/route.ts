@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getAdminCredentials, updateAdminCredentials } from "@/lib/storage";
+import { getAdminCredentialsAsync, updateAdminCredentialsAsync } from "@/lib/storage";
 
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
-    const creds = getAdminCredentials();
+    const creds = await getAdminCredentialsAsync();
 
     if (username === creds.username && password === creds.passwordHash) {
       return NextResponse.json({
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { username, currentPassword, newPassword } = await request.json();
-    const creds = getAdminCredentials();
+    const creds = await getAdminCredentialsAsync();
 
     if (currentPassword !== creds.passwordHash) {
       return NextResponse.json(
@@ -41,7 +41,7 @@ export async function PUT(request: Request) {
 
     const updatedUser = username || creds.username;
     const updatedPass = newPassword || creds.passwordHash;
-    updateAdminCredentials(updatedUser, updatedPass);
+    await updateAdminCredentialsAsync(updatedUser, updatedPass);
 
     return NextResponse.json({
       success: true,

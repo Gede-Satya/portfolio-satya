@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPortfolioContent, savePortfolioContent } from "@/lib/storage";
+import { getPortfolioContentAsync, savePortfolioContentAsync } from "@/lib/storage";
 import { SkillItem } from "@/types/portfolio";
 
 export async function POST(request: Request) {
@@ -12,9 +12,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     content.skills = [newSkill, ...content.skills];
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { originalName, ...updatedSkill } = await request.json();
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const lookup = originalName || updatedSkill.name;
     const index = content.skills.findIndex((s) => s.name === lookup);
 
@@ -48,7 +48,7 @@ export async function PUT(request: Request) {
       ...updatedSkill,
     };
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -75,7 +75,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const initialLen = content.skills.length;
     content.skills = content.skills.filter((s) => s.name !== name);
 
@@ -86,7 +86,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,

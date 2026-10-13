@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPortfolioContent, savePortfolioContent } from "@/lib/storage";
+import { getPortfolioContentAsync, savePortfolioContentAsync } from "@/lib/storage";
 import { TimelineItem } from "@/types/portfolio";
 
 export async function POST(request: Request) {
@@ -12,13 +12,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     if (!newItem.id) {
       newItem.id = "time-" + Date.now();
     }
 
     content.timeline = [newItem, ...content.timeline];
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const index = content.timeline.findIndex((t) => t.id === updatedItem.id);
 
     if (index === -1) {
@@ -58,7 +58,7 @@ export async function PUT(request: Request) {
       ...updatedItem,
     };
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -85,7 +85,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const initialLen = content.timeline.length;
     content.timeline = content.timeline.filter((t) => t.id !== id);
 
@@ -96,7 +96,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,

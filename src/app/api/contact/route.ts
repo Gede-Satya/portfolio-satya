@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server";
-import { getMessages, saveMessages, ContactMessage } from "@/lib/storage";
+import {
+  getMessagesAsync,
+  saveMessageAsync,
+  updateMessageReadAsync,
+  deleteMessageAsync,
+  ContactMessage,
+} from "@/lib/storage";
 
 export async function GET() {
   try {
-    const messages = getMessages();
+    const messages = await getMessagesAsync();
     const unreadCount = messages.filter((m) => !m.read).length;
     return NextResponse.json({
       success: true,
@@ -30,7 +36,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const messages = getMessages();
     const newMessage: ContactMessage = {
       id: "msg-" + Date.now(),
       name,
@@ -41,8 +46,7 @@ export async function POST(request: Request) {
       read: false,
     };
 
-    messages.unshift(newMessage);
-    saveMessages(messages);
+    await saveMessageAsync(newMessage);
 
     return NextResponse.json({
       success: true,
@@ -67,7 +71,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const messages = getMessages();
+    const messages = await getMessagesAsync();
     const msg = messages.find((m) => m.id === id);
 
     if (!msg) {
@@ -77,13 +81,13 @@ export async function PUT(request: Request) {
       );
     }
 
-    msg.read = read !== undefined ? read : !msg.read;
-    saveMessages(messages);
+    const targetRead = read !== undefined ? read : !msg.read;
+    await updateMessageReadAsync(id, targetRead);
 
     return NextResponse.json({
       success: true,
       message: "Status pesan diperbarui",
-      data: msg,
+      data: { ...msg, read: targetRead },
     });
   } catch (error) {
     return NextResponse.json(
@@ -105,17 +109,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const messages = getMessages();
-    const filtered = messages.filter((m) => m.id !== id);
-
-    if (filtered.length === messages.length) {
-      return NextResponse.json(
-        { success: false, message: "Pesan tidak ditemukan" },
-        { status: 404 }
-      );
-    }
-
-    saveMessages(filtered);
+    await deleteMessageAsync(id);
 
     return NextResponse.json({
       success: true,

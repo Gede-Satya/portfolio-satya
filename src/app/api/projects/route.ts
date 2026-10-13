@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPortfolioContent, savePortfolioContent } from "@/lib/storage";
+import { getPortfolioContentAsync, savePortfolioContentAsync } from "@/lib/storage";
 import { ProjectItem } from "@/types/portfolio";
 
 export async function POST(request: Request) {
@@ -12,13 +12,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     if (!newProject.id) {
       newProject.id = "proj-" + Date.now();
     }
 
     content.projects = [newProject, ...content.projects];
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -43,7 +43,7 @@ export async function PUT(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const index = content.projects.findIndex((p) => p.id === updatedProject.id);
 
     if (index === -1) {
@@ -58,7 +58,7 @@ export async function PUT(request: Request) {
       ...updatedProject,
     };
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,
@@ -85,7 +85,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const content = getPortfolioContent();
+    const content = await getPortfolioContentAsync();
     const initialLen = content.projects.length;
     content.projects = content.projects.filter((p) => p.id !== id);
 
@@ -96,7 +96,7 @@ export async function DELETE(request: Request) {
       );
     }
 
-    savePortfolioContent(content);
+    await savePortfolioContentAsync(content);
 
     return NextResponse.json({
       success: true,

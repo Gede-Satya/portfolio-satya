@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import {
-  getPortfolioContent,
-  savePortfolioContent,
-  resetToDefaultContent,
+  getPortfolioContentAsync,
+  savePortfolioContentAsync,
+  resetToDefaultContentAsync,
 } from "@/lib/storage";
 
 export async function GET() {
   try {
-    const data = getPortfolioContent();
+    const data = await getPortfolioContentAsync();
     return NextResponse.json({ success: true, data });
   } catch (error) {
     return NextResponse.json(
@@ -22,7 +22,7 @@ export async function PUT(request: Request) {
     const body = await request.json();
 
     if (body.action === "reset") {
-      const resetData = resetToDefaultContent();
+      const resetData = await resetToDefaultContentAsync();
       return NextResponse.json({
         success: true,
         message: "Data portofolio berhasil di-reset ke nilai default",
@@ -30,7 +30,7 @@ export async function PUT(request: Request) {
       });
     }
 
-    const current = getPortfolioContent();
+    const current = await getPortfolioContentAsync();
 
     if (body.profile) {
       current.profile = {
@@ -58,7 +58,7 @@ export async function PUT(request: Request) {
     }
 
     if (body.fullContent) {
-      savePortfolioContent(body.fullContent);
+      await savePortfolioContentAsync(body.fullContent);
       return NextResponse.json({
         success: true,
         message: "Seluruh konten portofolio berhasil disimpan",
@@ -66,7 +66,7 @@ export async function PUT(request: Request) {
       });
     }
 
-    savePortfolioContent(current);
+    await savePortfolioContentAsync(current);
     return NextResponse.json({
       success: true,
       message: "Profil portofolio berhasil diperbarui",

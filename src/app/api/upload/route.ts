@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import path from "path";
 import fs from "fs";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export async function POST(request: Request) {
   try {
@@ -50,13 +51,45 @@ export async function POST(request: Request) {
       .replace(/[^a-zA-Z0-9_-]/g, "_");
     const filename = `${baseName}-${Date.now()}${ext}`;
 
-    const uploadDir = path.join(process.cwd(), "public", "uploads");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
+    // If Supabase is configured, upload to Supabase Storage bucket
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { error: uploadError } = await supabase.storage
+          .from("portfolio-uploads")
+          .upload(filename, buffer, {
+            contentType: file.type,
+            upsert: true,
+          });
+
+        if (!uploadError) {
+          const { data: publicData } = supabase.storage
+            .from("portfolio-uploads")
+            .getPublicUrl(filename);
+
+          return NextResponse.json({
+            success: true,
+            message: "Gambar berhasil diunggah ke Supabase Storage",
+            url: publicData.publicUrl,
+            filename,
+          });
+        }
+        console.warn("Supabase storage upload error, fallback to local:", uploadError);
+      } catch (err) {
+        console.warn("Supabase storage upload exception, fallback to local:", err);
+      }
     }
 
-    const filePath = path.join(uploadDir, filename);
-    fs.writeFileSync(filePath, buffer);
+    // Local fallback
+    const uploadDir = path.join(process.cwd(), "public", "uploads");
+    try {
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      const filePath = path.join(uploadDir, filename);
+      fs.writeFileSync(filePath, buffer);
+    } catch (fsErr) {
+      console.warn("Local upload write skipped:", fsErr);
+    }
 
     const publicUrl = `/uploads/${filename}`;
 
