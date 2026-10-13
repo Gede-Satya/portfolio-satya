@@ -2,13 +2,17 @@ import { NextResponse } from "next/server";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 export async function GET() {
+  const matchingEnvKeys = Object.keys(process.env).filter((k) =>
+    /supabase|postgres|database|next_public/i.test(k)
+  );
+
   const envStatus = {
+    matchingEnvKeys,
     has_NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
     has_SUPABASE_URL: Boolean(process.env.SUPABASE_URL),
     has_SUPABASE_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
     has_NEXT_PUBLIC_SUPABASE_ANON_KEY: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     has_SUPABASE_ANON_KEY: Boolean(process.env.SUPABASE_ANON_KEY),
-    supabaseUrlPreview: (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "").slice(0, 25),
     isSupabaseConfigured,
   };
 
