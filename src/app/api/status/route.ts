@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Use request url to prevent static pre-rendering
+  const _url = request.url;
   const matchingEnvKeys = Object.keys(process.env).filter((k) =>
     /supabase|postgres|database|next_public|key|secret|token|anon|publishable/i.test(k)
   );
 
   const envStatus = {
+    urlLength: _url ? 1 : 0,
     matchingEnvKeys,
     has_NEXT_PUBLIC_SUPABASE_URL: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
     has_SUPABASE_URL: Boolean(process.env.SUPABASE_URL),
@@ -23,8 +26,8 @@ export async function GET() {
     canRead: boolean;
     canWrite: boolean;
     rowCount: number;
-    readError: any;
-    writeError: any;
+    readError: Record<string, unknown> | string | null;
+    writeError: Record<string, unknown> | string | null;
   } = {
     canRead: false,
     canWrite: false,
