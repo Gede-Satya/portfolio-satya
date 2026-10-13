@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Lock, User, ArrowRight, Eye, EyeOff, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Lock, User, ArrowRight, Eye, EyeOff, ArrowLeft } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,17 +42,11 @@ export default function AdminLoginPage() {
       } else {
         setError(data.message || "Username atau password salah.");
       }
-    } catch (err) {
+    } catch {
       setError("Gagal terhubung ke server. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillDemoCreds = () => {
-    setUsername("admin");
-    setPassword("admin123");
-    setError(null);
   };
 
   return (
@@ -106,7 +100,7 @@ export default function AdminLoginPage() {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin"
+                  placeholder="Masukkan username"
                   className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-indigo-500 transition-colors"
                 />
               </div>
@@ -123,7 +117,7 @@ export default function AdminLoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder="Masukkan password"
                   className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-indigo-500 transition-colors"
                 />
                 <button
@@ -155,21 +149,6 @@ export default function AdminLoginPage() {
               )}
             </button>
           </form>
-
-          {/* Quick Demo Helper */}
-          <div className="mt-6 pt-5 border-t border-zinc-800/80 text-center">
-            <p className="text-[11px] text-zinc-400 mb-2">
-              Kredensial Default Demo:
-            </p>
-            <button
-              type="button"
-              onClick={fillDemoCreds}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800/60 hover:bg-zinc-800 border border-zinc-700/60 text-xs font-mono text-zinc-300 transition-colors"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
-              <span>admin / admin123</span>
-            </button>
-          </div>
         </div>
       </div>
     </div>
