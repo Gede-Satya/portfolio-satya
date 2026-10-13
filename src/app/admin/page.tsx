@@ -78,6 +78,9 @@ export default function AdminDashboardPage() {
   const [testimonialModalOpen, setTestimonialModalOpen] = useState(false);
   const [editingTestimonial, setEditingTestimonial] = useState<TestimonialItem | null>(null);
 
+  // Deleting item tracking for smooth exit animations
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   // Settings state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -200,15 +203,30 @@ export default function AdminDashboardPage() {
 
   const handleDeleteProject = async (id: string) => {
     if (!confirm("Apakah Anda yakin ingin menghapus proyek ini?")) return;
+    const deleteKey = `proj-${id}`;
+    setDeletingId(deleteKey);
     try {
-      const res = await fetch(`/api/projects?id=${id}`, { method: "DELETE" });
+      const [res] = await Promise.all([
+        fetch(`/api/projects?id=${id}`, { method: "DELETE" }),
+        new Promise((resolve) => setTimeout(resolve, 320)),
+      ]);
       const data = await res.json();
       if (data.success) {
         showToast("Proyek berhasil dihapus");
+        if (content) {
+          setContent({
+            ...content,
+            projects: content.projects.filter((p) => p.id !== id),
+          });
+        }
         loadData();
+      } else {
+        showToast(data.message || "Gagal menghapus proyek");
       }
     } catch (err) {
       showToast("Gagal menghapus proyek");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -239,19 +257,34 @@ export default function AdminDashboardPage() {
 
   const handleDeleteSkill = async (name: string) => {
     if (!confirm(`Hapus keahlian ${name}?`)) return;
+    const deleteKey = `skill-${name}`;
+    setDeletingId(deleteKey);
     try {
-      const res = await fetch(`/api/skills?name=${encodeURIComponent(name)}`, {
-        method: "DELETE",
-      });
+      const [res] = await Promise.all([
+        fetch(`/api/skills?name=${encodeURIComponent(name)}`, {
+          method: "DELETE",
+        }),
+        new Promise((resolve) => setTimeout(resolve, 320)),
+      ]);
       const data = await res.json();
       if (data.success) {
         showToast("Keahlian berhasil dihapus");
+        if (content) {
+          setContent({
+            ...content,
+            skills: content.skills.filter(
+              (s) => s.name.trim().toLowerCase() !== name.trim().toLowerCase()
+            ),
+          });
+        }
         loadData();
       } else {
         showToast(data.message || "Gagal menghapus keahlian");
       }
     } catch (err) {
       showToast("Gagal menghapus keahlian");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -283,15 +316,30 @@ export default function AdminDashboardPage() {
 
   const handleDeleteTimeline = async (id: string) => {
     if (!confirm("Hapus riwayat pengalaman ini?")) return;
+    const deleteKey = `time-${id}`;
+    setDeletingId(deleteKey);
     try {
-      const res = await fetch(`/api/timeline?id=${id}`, { method: "DELETE" });
+      const [res] = await Promise.all([
+        fetch(`/api/timeline?id=${id}`, { method: "DELETE" }),
+        new Promise((resolve) => setTimeout(resolve, 320)),
+      ]);
       const data = await res.json();
       if (data.success) {
         showToast("Riwayat berhasil dihapus");
+        if (content) {
+          setContent({
+            ...content,
+            timeline: content.timeline.filter((t) => t.id !== id),
+          });
+        }
         loadData();
+      } else {
+        showToast(data.message || "Gagal menghapus riwayat");
       }
     } catch (err) {
       showToast("Gagal menghapus riwayat");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -324,17 +372,32 @@ export default function AdminDashboardPage() {
   const handleDeleteTestimonial = async (id?: string) => {
     if (!id) return;
     if (!confirm("Hapus rekomendasi rekan ini?")) return;
+    const deleteKey = `testi-${id}`;
+    setDeletingId(deleteKey);
     try {
-      const res = await fetch(`/api/testimonials?id=${encodeURIComponent(id)}`, {
-        method: "DELETE",
-      });
+      const [res] = await Promise.all([
+        fetch(`/api/testimonials?id=${encodeURIComponent(id)}`, {
+          method: "DELETE",
+        }),
+        new Promise((resolve) => setTimeout(resolve, 320)),
+      ]);
       const data = await res.json();
       if (data.success) {
         showToast("Rekomendasi berhasil dihapus");
+        if (content) {
+          setContent({
+            ...content,
+            testimonials: (content.testimonials || []).filter((t) => t.id !== id),
+          });
+        }
         loadData();
+      } else {
+        showToast(data.message || "Gagal menghapus rekomendasi");
       }
     } catch (err) {
       showToast("Gagal menghapus rekomendasi");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -357,15 +420,25 @@ export default function AdminDashboardPage() {
 
   const handleDeleteMessage = async (id: string) => {
     if (!confirm("Hapus pesan ini?")) return;
+    const deleteKey = `msg-${id}`;
+    setDeletingId(deleteKey);
     try {
-      const res = await fetch(`/api/contact?id=${id}`, { method: "DELETE" });
+      const [res] = await Promise.all([
+        fetch(`/api/contact?id=${id}`, { method: "DELETE" }),
+        new Promise((resolve) => setTimeout(resolve, 320)),
+      ]);
       const data = await res.json();
       if (data.success) {
         showToast("Pesan dihapus");
+        setMessages((prev) => prev.filter((m) => m.id !== id));
         loadData();
+      } else {
+        showToast(data.message || "Gagal menghapus pesan");
       }
     } catch (err) {
       showToast("Gagal menghapus pesan");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -2022,59 +2095,72 @@ export default function AdminDashboardPage() {
 
               {/* Projects List */}
               <div className="space-y-4">
-                {content.projects.map((project: ProjectItem) => (
-                  <div
-                    key={project.id}
-                    className="p-5 rounded-2xl bg-[#121217] border border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-zinc-700 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-12 rounded-xl overflow-hidden relative bg-zinc-800 shrink-0">
-                        <Image
-                          src={project.image}
-                          alt={project.title}
-                          fill
-                          className="object-cover"
-                        />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-indigo-400 font-semibold">
-                            {project.category}
-                          </span>
-                          <span className="text-[10px] text-zinc-500 font-mono">
-                            {project.badge}
-                          </span>
+                {content.projects.map((project: ProjectItem) => {
+                  const isDeleting = deletingId === `proj-${project.id}`;
+                  return (
+                    <div
+                      key={project.id}
+                      className={`p-5 rounded-2xl bg-[#121217] border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-all duration-300 ease-out transform ${
+                        isDeleting
+                          ? "opacity-0 scale-90 -translate-y-2 pointer-events-none bg-rose-500/10 border-rose-500/30"
+                          : "opacity-100 scale-100 translate-y-0 border-zinc-800 hover:border-zinc-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-12 rounded-xl overflow-hidden relative bg-zinc-800 shrink-0">
+                          <Image
+                            src={project.image}
+                            alt={project.title}
+                            fill
+                            className="object-cover"
+                          />
                         </div>
-                        <h4 className="font-bold text-sm text-white mt-1">
-                          {project.title}
-                        </h4>
-                        <p className="text-xs text-zinc-400 line-clamp-1">
-                          {project.summary.id}
-                        </p>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-indigo-400 font-semibold">
+                              {project.category}
+                            </span>
+                            <span className="text-[10px] text-zinc-500 font-mono">
+                              {project.badge}
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-sm text-white mt-1">
+                            {project.title}
+                          </h4>
+                          <p className="text-xs text-zinc-400 line-clamp-1">
+                            {project.summary.id}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <button
+                          onClick={() => {
+                            setEditingProject(project);
+                            setProjectModalOpen(true);
+                          }}
+                          disabled={isDeleting}
+                          className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50"
+                          title="Edit Proyek"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProject(project.id)}
+                          disabled={isDeleting}
+                          className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors disabled:opacity-50"
+                          title="Hapus Proyek"
+                        >
+                          {isDeleting ? (
+                            <RefreshCw className="w-4 h-4 animate-spin text-rose-400" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 self-end sm:self-center">
-                      <button
-                        onClick={() => {
-                          setEditingProject(project);
-                          setProjectModalOpen(true);
-                        }}
-                        className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-                        title="Edit Proyek"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteProject(project.id)}
-                        className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
-                        title="Hapus Proyek"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2103,54 +2189,67 @@ export default function AdminDashboardPage() {
 
               {/* Skills List */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {content.skills.map((skill: SkillItem, idx: number) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-2xl bg-[#121217] border border-zinc-800 flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <span className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center font-mono font-bold text-xs text-indigo-400">
-                        {skill.iconText}
-                      </span>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-bold text-sm text-white">{skill.name}</h4>
-                          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
-                            {skill.category}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] text-zinc-400 font-mono">
-                            {skill.level} • {skill.progress}%
-                          </span>
+                {content.skills.map((skill: SkillItem, idx: number) => {
+                  const isDeleting = deletingId === `skill-${skill.name}`;
+                  return (
+                    <div
+                      key={skill.name || idx}
+                      className={`p-4 rounded-2xl bg-[#121217] border flex items-center justify-between gap-3 transition-all duration-300 ease-out transform ${
+                        isDeleting
+                          ? "opacity-0 scale-90 -translate-y-2 pointer-events-none bg-rose-500/10 border-rose-500/30"
+                          : "opacity-100 scale-100 translate-y-0 border-zinc-800 hover:border-zinc-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center font-mono font-bold text-xs text-indigo-400">
+                          {skill.iconText}
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-white">{skill.name}</h4>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400">
+                              {skill.category}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] text-zinc-400 font-mono">
+                              {skill.level} • {skill.progress}%
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          setEditingSkill({
-                            originalName: skill.name,
-                            item: { ...skill },
-                          });
-                          setSkillModalOpen(true);
-                        }}
-                        className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-                        title="Edit Keahlian"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteSkill(skill.name)}
-                        className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400"
-                        title="Hapus Keahlian"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            setEditingSkill({
+                              originalName: skill.name,
+                              item: { ...skill },
+                            });
+                            setSkillModalOpen(true);
+                          }}
+                          disabled={isDeleting}
+                          className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50"
+                          title="Edit Keahlian"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteSkill(skill.name)}
+                          disabled={isDeleting}
+                          className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 disabled:opacity-50"
+                          title="Hapus Keahlian"
+                        >
+                          {isDeleting ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                          ) : (
+                            <Trash2 className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2179,50 +2278,63 @@ export default function AdminDashboardPage() {
 
               {/* Timeline List */}
               <div className="space-y-4">
-                {content.timeline.map((item: TimelineItem) => (
-                  <div
-                    key={item.id}
-                    className="p-5 rounded-2xl bg-[#121217] border border-zinc-800 flex items-start justify-between gap-4"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-mono font-semibold text-indigo-400">
-                          {item.period}
-                        </span>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
-                          {item.badge.id}
-                        </span>
+                {content.timeline.map((item: TimelineItem) => {
+                  const isDeleting = deletingId === `time-${item.id}`;
+                  return (
+                    <div
+                      key={item.id}
+                      className={`p-5 rounded-2xl bg-[#121217] border flex items-start justify-between gap-4 transition-all duration-300 ease-out transform ${
+                        isDeleting
+                          ? "opacity-0 scale-90 -translate-y-2 pointer-events-none bg-rose-500/10 border-rose-500/30"
+                          : "opacity-100 scale-100 translate-y-0 border-zinc-800 hover:border-zinc-700"
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-semibold text-indigo-400">
+                            {item.period}
+                          </span>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-300">
+                            {item.badge.id}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-sm text-white mt-1">
+                          {item.role.id}
+                        </h4>
+                        <p className="text-xs font-medium text-zinc-400">
+                          {item.company}
+                        </p>
+                        <p className="text-xs text-zinc-500 mt-2 line-clamp-2">
+                          {item.description.id}
+                        </p>
                       </div>
-                      <h4 className="font-bold text-sm text-white mt-1">
-                        {item.role.id}
-                      </h4>
-                      <p className="text-xs font-medium text-zinc-400">
-                        {item.company}
-                      </p>
-                      <p className="text-xs text-zinc-500 mt-2 line-clamp-2">
-                        {item.description.id}
-                      </p>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setEditingTimeline(item);
-                          setTimelineModalOpen(true);
-                        }}
-                        className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTimeline(item.id)}
-                        className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingTimeline(item);
+                            setTimelineModalOpen(true);
+                          }}
+                          disabled={isDeleting}
+                          className="p-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 disabled:opacity-50"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteTimeline(item.id)}
+                          disabled={isDeleting}
+                          className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 disabled:opacity-50"
+                        >
+                          {isDeleting ? (
+                            <RefreshCw className="w-4 h-4 animate-spin text-rose-400" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -2255,69 +2367,83 @@ export default function AdminDashboardPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {content.testimonials.map((item: TestimonialItem, idx: number) => (
-                    <div
-                      key={item.id || idx}
-                      className="p-5 rounded-2xl bg-[#121217] border border-zinc-800 flex flex-col justify-between hover:border-zinc-700 transition-all group"
-                    >
-                      <div>
-                        {/* Rating & Action buttons */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center gap-1 text-amber-400">
-                            {[...Array(5)].map((_, i) => (
-                              <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={() => {
-                                setEditingTestimonial(item);
-                                setTestimonialModalOpen(true);
-                              }}
-                              className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors"
-                              title="Edit Rekomendasi"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTestimonial(item.id)}
-                              className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors"
-                              title="Hapus Rekomendasi"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Quote Content */}
-                        <div className="space-y-2 mb-4">
-                          <div className="text-xs text-zinc-300 line-clamp-3 leading-relaxed italic border-l-2 border-indigo-500/40 pl-3">
-                            &ldquo;{item.quote.id}&rdquo;
-                          </div>
-                          {item.quote.en && item.quote.en !== item.quote.id && (
-                            <div className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed italic pl-3 border-l-2 border-zinc-800">
-                              EN: &ldquo;{item.quote.en}&rdquo;
+                  {content.testimonials.map((item: TestimonialItem, idx: number) => {
+                    const itemId = item.id || `testi-idx-${idx}`;
+                    const isDeleting = deletingId === `testi-${item.id}`;
+                    return (
+                      <div
+                        key={itemId}
+                        className={`p-5 rounded-2xl bg-[#121217] border flex flex-col justify-between transition-all duration-300 ease-out transform group ${
+                          isDeleting
+                            ? "opacity-0 scale-90 -translate-y-2 pointer-events-none bg-rose-500/10 border-rose-500/30"
+                            : "opacity-100 scale-100 translate-y-0 border-zinc-800 hover:border-zinc-700"
+                        }`}
+                      >
+                        <div>
+                          {/* Rating & Action buttons */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center gap-1 text-amber-400">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                              ))}
                             </div>
-                          )}
-                        </div>
-                      </div>
+                            <div className="flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => {
+                                  setEditingTestimonial(item);
+                                  setTestimonialModalOpen(true);
+                                }}
+                                disabled={isDeleting}
+                                className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors disabled:opacity-50"
+                                title="Edit Rekomendasi"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTestimonial(item.id)}
+                                disabled={isDeleting}
+                                className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors disabled:opacity-50"
+                                title="Hapus Rekomendasi"
+                              >
+                                {isDeleting ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-400" />
+                                ) : (
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            </div>
+                          </div>
 
-                      {/* Author Info */}
-                      <div className="pt-3 border-t border-zinc-800/80 flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
-                          {item.initials || (item.author ? item.author.slice(0, 2).toUpperCase() : "AP")}
+                          {/* Quote Content */}
+                          <div className="space-y-2 mb-4">
+                            <div className="text-xs text-zinc-300 line-clamp-3 leading-relaxed italic border-l-2 border-indigo-500/40 pl-3">
+                              &ldquo;{item.quote.id}&rdquo;
+                            </div>
+                            {item.quote.en && item.quote.en !== item.quote.id && (
+                              <div className="text-[11px] text-zinc-500 line-clamp-2 leading-relaxed italic pl-3 border-l-2 border-zinc-800">
+                                EN: &ldquo;{item.quote.en}&rdquo;
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <h4 className="text-xs font-bold text-white truncate">
-                            {item.author}
-                          </h4>
-                          <p className="text-[11px] text-zinc-400 truncate">
-                            {item.role}
-                          </p>
+
+                        {/* Author Info */}
+                        <div className="pt-3 border-t border-zinc-800/80 flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
+                            {item.initials || (item.author ? item.author.slice(0, 2).toUpperCase() : "AP")}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h4 className="text-xs font-bold text-white truncate">
+                              {item.author}
+                            </h4>
+                            <p className="text-[11px] text-zinc-400 truncate">
+                              {item.role}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
@@ -2339,74 +2465,85 @@ export default function AdminDashboardPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((msg: ContactMessage) => (
-                    <div
-                      key={msg.id}
-                      className={`p-5 rounded-2xl border transition-all ${
-                        msg.read
-                          ? "bg-[#121217] border-zinc-800 text-zinc-400"
-                          : "bg-[#151520] border-indigo-500/40 text-zinc-200 shadow-md"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`w-2 h-2 rounded-full ${
-                              msg.read ? "bg-zinc-600" : "bg-emerald-400 animate-pulse"
-                            }`}
-                          />
-                          <h4 className="font-bold text-sm text-white">{msg.name}</h4>
-                          <span className="text-xs text-zinc-400">&lt;{msg.email}&gt;</span>
+                  {messages.map((msg: ContactMessage) => {
+                    const isDeleting = deletingId === `msg-${msg.id}`;
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`p-5 rounded-2xl border transition-all duration-300 ease-out transform ${
+                          isDeleting
+                            ? "opacity-0 scale-90 -translate-y-2 pointer-events-none bg-rose-500/10 border-rose-500/30"
+                            : msg.read
+                            ? "opacity-100 scale-100 translate-y-0 bg-[#121217] border-zinc-800 text-zinc-400"
+                            : "opacity-100 scale-100 translate-y-0 bg-[#151520] border-indigo-500/40 text-zinc-200 shadow-md"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`w-2 h-2 rounded-full ${
+                                msg.read ? "bg-zinc-600" : "bg-emerald-400 animate-pulse"
+                              }`}
+                            />
+                            <h4 className="font-bold text-sm text-white">{msg.name}</h4>
+                            <span className="text-xs text-zinc-400">&lt;{msg.email}&gt;</span>
+                          </div>
+                          <span className="text-[11px] font-mono text-zinc-500">
+                            {new Date(msg.createdAt).toLocaleDateString("id-ID", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
                         </div>
-                        <span className="text-[11px] font-mono text-zinc-500">
-                          {new Date(msg.createdAt).toLocaleDateString("id-ID", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
 
-                      <div className="mb-3">
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-800 text-indigo-400 font-mono">
-                          {msg.subject}
-                        </span>
-                      </div>
+                        <div className="mb-3">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded bg-zinc-800 text-indigo-400 font-mono">
+                            {msg.subject}
+                          </span>
+                        </div>
 
-                      <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80 mb-4">
-                        {msg.message}
-                      </p>
+                        <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80 mb-4">
+                          {msg.message}
+                        </p>
 
-                      <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60 text-xs">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between pt-2 border-t border-zinc-800/60 text-xs">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleReadMessage(msg.id, msg.read)}
+                              disabled={isDeleting}
+                              className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium transition-colors disabled:opacity-50"
+                            >
+                              {msg.read ? "Tandai Belum Dibaca" : "Tandai Sudah Dibaca"}
+                            </button>
+                            <a
+                              href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(
+                                msg.subject
+                              )}`}
+                              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
+                            >
+                              Balas via Email
+                            </a>
+                          </div>
+
                           <button
-                            onClick={() => handleToggleReadMessage(msg.id, msg.read)}
-                            className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium transition-colors"
+                            onClick={() => handleDeleteMessage(msg.id)}
+                            disabled={isDeleting}
+                            className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                            title="Hapus Pesan"
                           >
-                            {msg.read ? "Tandai Belum Dibaca" : "Tandai Sudah Dibaca"}
+                            {isDeleting ? (
+                              <RefreshCw className="w-4 h-4 animate-spin text-rose-400" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
                           </button>
-                          <a
-                            href={`mailto:${msg.email}?subject=Re: ${encodeURIComponent(
-                              msg.subject
-                            )}`}
-                            className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition-colors"
-                          >
-                            Balas via Email
-                          </a>
                         </div>
-
-                        <button
-                          onClick={() => handleDeleteMessage(msg.id)}
-                          className="p-1.5 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors"
-                          title="Hapus Pesan"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
