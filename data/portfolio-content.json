@@ -409,21 +409,6 @@
       "iconText": "Node"
     },
     {
-      "name": "GraphQL & REST APIs",
-      "category": "backend",
-      "level": "Advanced",
-      "exp": {
-        "id": "3+ Tahun",
-        "en": "3+ Years"
-      },
-      "desc": {
-        "id": "Perancangan skema bersih, rate limiting, OpenAPI/Swagger dokumentasi, dan query batching.",
-        "en": "Clean schema authoring, rate limiting, OpenAPI documentation, and query batching resolvers."
-      },
-      "progress": 88,
-      "iconText": "API"
-    },
-    {
       "name": "PostgreSQL & Prisma / Drizzle",
       "category": "database",
       "level": "Expert",
@@ -482,21 +467,6 @@
       },
       "progress": 95,
       "iconText": "Git"
-    },
-    {
-      "name": "Jest, Vitest & Playwright",
-      "category": "tools",
-      "level": "Advanced",
-      "exp": {
-        "id": "3+ Tahun",
-        "en": "3+ Years"
-      },
-      "desc": {
-        "id": "Unit testing, integration testing, dan end-to-end (E2E) automation untuk stabilitas produksi.",
-        "en": "Comprehensive unit testing, API integration suites, and end-to-end browser regression automation."
-      },
-      "progress": 84,
-      "iconText": "Test"
     },
     {
       "name": "Figma to Code & Web Vitals",

@@ -52,7 +52,7 @@ export function PortfolioView({ initialData }: PortfolioViewProps) {
     }
 
     // Background sync live CMS data
-    fetch("/api/portfolio")
+    fetch(`/api/portfolio?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data) {

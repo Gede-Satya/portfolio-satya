@@ -81,6 +81,14 @@ export default function AdminDashboardPage() {
   // Deleting item tracking for smooth exit animations
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // In-app custom confirmation modal (replaces native window.confirm to prevent browser blocking)
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   // Settings state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -97,15 +105,15 @@ export default function AdminDashboardPage() {
       router.push("/admin/login");
       return;
     }
-    loadData();
+    loadData(true);
   }, [router]);
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (showLoadingSpinner = false) => {
+    if (showLoadingSpinner) setLoading(true);
     try {
       const [resContent, resMessages] = await Promise.all([
-        fetch("/api/portfolio"),
-        fetch("/api/contact"),
+        fetch(`/api/portfolio?_t=${Date.now()}`, { cache: "no-store" }),
+        fetch(`/api/contact?_t=${Date.now()}`, { cache: "no-store" }),
       ]);
 
       const dataContent = await resContent.json();
@@ -116,7 +124,7 @@ export default function AdminDashboardPage() {
     } catch (err) {
       showToast("Gagal memuat data dari server");
     } finally {
-      setLoading(false);
+      if (showLoadingSpinner) setLoading(false);
     }
   };
 
@@ -201,13 +209,12 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleDeleteProject = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus proyek ini?")) return;
+  const executeDeleteProject = async (id: string) => {
     const deleteKey = `proj-${id}`;
     setDeletingId(deleteKey);
     try {
       const [res] = await Promise.all([
-        fetch(`/api/projects?id=${id}`, { method: "DELETE" }),
+        fetch(`/api/projects?id=${encodeURIComponent(id)}`, { method: "DELETE" }),
         new Promise((resolve) => setTimeout(resolve, 320)),
       ]);
       const data = await res.json();
@@ -219,7 +226,7 @@ export default function AdminDashboardPage() {
             projects: content.projects.filter((p) => p.id !== id),
           });
         }
-        loadData();
+        loadData(false);
       } else {
         showToast(data.message || "Gagal menghapus proyek");
       }
@@ -228,6 +235,15 @@ export default function AdminDashboardPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleDeleteProject = (id: string, title?: string) => {
+    setConfirmModal({
+      title: "Hapus Proyek",
+      message: `Apakah Anda yakin ingin menghapus proyek ${title ? `"${title}"` : "ini"}? Tindakan ini tidak dapat dibatalkan.`,
+      confirmLabel: "Hapus Proyek",
+      onConfirm: () => executeDeleteProject(id),
+    });
   };
 
   // Skills actions
@@ -246,7 +262,7 @@ export default function AdminDashboardPage() {
         );
         setSkillModalOpen(false);
         setEditingSkill(null);
-        loadData();
+        loadData(false);
       }
     } catch (err) {
       showToast("Gagal menyimpan keahlian");
@@ -255,8 +271,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleDeleteSkill = async (name: string) => {
-    if (!confirm(`Hapus keahlian ${name}?`)) return;
+  const executeDeleteSkill = async (name: string) => {
     const deleteKey = `skill-${name}`;
     setDeletingId(deleteKey);
     try {
@@ -268,7 +283,7 @@ export default function AdminDashboardPage() {
       ]);
       const data = await res.json();
       if (data.success) {
-        showToast("Keahlian berhasil dihapus");
+        showToast(`Keahlian "${name}" berhasil dihapus`);
         if (content) {
           setContent({
             ...content,
@@ -277,7 +292,7 @@ export default function AdminDashboardPage() {
             ),
           });
         }
-        loadData();
+        loadData(false);
       } else {
         showToast(data.message || "Gagal menghapus keahlian");
       }
@@ -286,6 +301,15 @@ export default function AdminDashboardPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleDeleteSkill = (name: string) => {
+    setConfirmModal({
+      title: "Hapus Keahlian",
+      message: `Apakah Anda yakin ingin menghapus keahlian "${name}" dari portofolio? Tindakan ini tidak dapat dibatalkan.`,
+      confirmLabel: "Hapus Keahlian",
+      onConfirm: () => executeDeleteSkill(name),
+    });
   };
 
   // Timeline actions
@@ -314,13 +338,12 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleDeleteTimeline = async (id: string) => {
-    if (!confirm("Hapus riwayat pengalaman ini?")) return;
+  const executeDeleteTimeline = async (id: string) => {
     const deleteKey = `time-${id}`;
     setDeletingId(deleteKey);
     try {
       const [res] = await Promise.all([
-        fetch(`/api/timeline?id=${id}`, { method: "DELETE" }),
+        fetch(`/api/timeline?id=${encodeURIComponent(id)}`, { method: "DELETE" }),
         new Promise((resolve) => setTimeout(resolve, 320)),
       ]);
       const data = await res.json();
@@ -332,7 +355,7 @@ export default function AdminDashboardPage() {
             timeline: content.timeline.filter((t) => t.id !== id),
           });
         }
-        loadData();
+        loadData(false);
       } else {
         showToast(data.message || "Gagal menghapus riwayat");
       }
@@ -341,6 +364,15 @@ export default function AdminDashboardPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleDeleteTimeline = (id: string) => {
+    setConfirmModal({
+      title: "Hapus Riwayat Pengalaman",
+      message: "Apakah Anda yakin ingin menghapus riwayat ini? Tindakan ini tidak dapat dibatalkan.",
+      confirmLabel: "Hapus Riwayat",
+      onConfirm: () => executeDeleteTimeline(id),
+    });
   };
 
   // Testimonial actions
@@ -360,7 +392,7 @@ export default function AdminDashboardPage() {
         );
         setTestimonialModalOpen(false);
         setEditingTestimonial(null);
-        loadData();
+        loadData(false);
       }
     } catch (err) {
       showToast("Gagal menyimpan rekomendasi");
@@ -369,9 +401,7 @@ export default function AdminDashboardPage() {
     }
   };
 
-  const handleDeleteTestimonial = async (id?: string) => {
-    if (!id) return;
-    if (!confirm("Hapus rekomendasi rekan ini?")) return;
+  const executeDeleteTestimonial = async (id: string) => {
     const deleteKey = `testi-${id}`;
     setDeletingId(deleteKey);
     try {
@@ -390,7 +420,7 @@ export default function AdminDashboardPage() {
             testimonials: (content.testimonials || []).filter((t) => t.id !== id),
           });
         }
-        loadData();
+        loadData(false);
       } else {
         showToast(data.message || "Gagal menghapus rekomendasi");
       }
@@ -399,6 +429,16 @@ export default function AdminDashboardPage() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const handleDeleteTestimonial = (id?: string) => {
+    if (!id) return;
+    setConfirmModal({
+      title: "Hapus Rekomendasi Rekan",
+      message: "Apakah Anda yakin ingin menghapus rekomendasi rekan ini? Tindakan ini tidak dapat dibatalkan.",
+      confirmLabel: "Hapus Rekomendasi",
+      onConfirm: () => executeDeleteTestimonial(id),
+    });
   };
 
   // Messages actions
@@ -411,27 +451,26 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (data.success) {
-        loadData();
+        loadData(false);
       }
     } catch (err) {
       showToast("Gagal memperbarui status pesan");
     }
   };
 
-  const handleDeleteMessage = async (id: string) => {
-    if (!confirm("Hapus pesan ini?")) return;
+  const executeDeleteMessage = async (id: string) => {
     const deleteKey = `msg-${id}`;
     setDeletingId(deleteKey);
     try {
       const [res] = await Promise.all([
-        fetch(`/api/contact?id=${id}`, { method: "DELETE" }),
+        fetch(`/api/contact?id=${encodeURIComponent(id)}`, { method: "DELETE" }),
         new Promise((resolve) => setTimeout(resolve, 320)),
       ]);
       const data = await res.json();
       if (data.success) {
         showToast("Pesan dihapus");
         setMessages((prev) => prev.filter((m) => m.id !== id));
-        loadData();
+        loadData(false);
       } else {
         showToast(data.message || "Gagal menghapus pesan");
       }
@@ -442,14 +481,17 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleDeleteMessage = (id: string) => {
+    setConfirmModal({
+      title: "Hapus Pesan Kontak",
+      message: "Apakah Anda yakin ingin menghapus pesan ini dari kotak masuk?",
+      confirmLabel: "Hapus Pesan",
+      onConfirm: () => executeDeleteMessage(id),
+    });
+  };
+
   // Reset to default seed
-  const handleResetDefaults = async () => {
-    if (
-      !confirm(
-        "Apakah Anda yakin ingin me-reset seluruh konten ke nilai default awal? Data yang belum di-backup akan ditimpa."
-      )
-    )
-      return;
+  const executeResetDefaults = async () => {
     try {
       const res = await fetch("/api/portfolio", {
         method: "PUT",
@@ -459,11 +501,21 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data.success) {
         showToast("Konten berhasil di-reset ke nilai default!");
-        loadData();
+        if (data.data) setContent(data.data);
+        loadData(false);
       }
     } catch (err) {
       showToast("Gagal me-reset konten");
     }
+  };
+
+  const handleResetDefaults = () => {
+    setConfirmModal({
+      title: "Reset Konten ke Nilai Default",
+      message: "Apakah Anda yakin ingin me-reset seluruh konten ke nilai default awal? Data yang belum di-backup akan ditimpa.",
+      confirmLabel: "Reset Konten",
+      onConfirm: executeResetDefaults,
+    });
   };
 
   // Update password
@@ -2689,6 +2741,44 @@ export default function AdminDashboardPage() {
           }}
           onSave={handleSaveTestimonial}
         />
+      )}
+
+      {/* CONFIRMATION MODAL (Replaces window.confirm) */}
+      {confirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-[#121218] border border-zinc-800 rounded-2xl p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-base font-bold text-white">{confirmModal.title}</h3>
+                <p className="text-xs text-zinc-400 leading-relaxed">{confirmModal.message}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-300 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const run = confirmModal.onConfirm;
+                  setConfirmModal(null);
+                  run();
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-xs font-semibold text-white shadow-lg shadow-rose-600/20 transition-all flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>{confirmModal.confirmLabel || "Ya, Hapus"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast Alert */}
