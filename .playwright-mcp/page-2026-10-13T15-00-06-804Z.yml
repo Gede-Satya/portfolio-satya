@@ -1,0 +1,489 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e4]:
+      - generic [ref=e5]: Tersedia untuk Peluang Kerja Penuh Waktu & Kontrak Proyek
+      - generic [ref=e10]: 📍 Bali,Denpasar
+    - banner [ref=e12]:
+      - generic [ref=e13]:
+        - link "Gede Satya Budi Dharma Wiguna Home" [ref=e14] [cursor=pointer]:
+          - /url: "#hero"
+          - generic [ref=e15]: GS
+          - generic [ref=e16]:
+            - generic [ref=e17]: Gede Satya Budi Dharma Wiguna
+            - generic [ref=e18]: gede.dev
+        - navigation [ref=e19]:
+          - link "Tentang" [ref=e20] [cursor=pointer]:
+            - /url: "#about"
+          - link "Keahlian" [ref=e21] [cursor=pointer]:
+            - /url: "#skills"
+          - link "Proyek" [ref=e22] [cursor=pointer]:
+            - /url: "#projects"
+          - link "Pengalaman" [ref=e23] [cursor=pointer]:
+            - /url: "#experience"
+          - link "Terminal" [ref=e24] [cursor=pointer]:
+            - /url: "#terminal"
+          - link "Kontak" [ref=e25] [cursor=pointer]:
+            - /url: "#contact"
+        - generic [ref=e26]:
+          - button "Toggle language" [ref=e27] [cursor=pointer]:
+            - generic [ref=e28]: ID
+            - generic [ref=e29]: /
+            - generic [ref=e30]: EN
+          - button "Toggle color mode" [ref=e31] [cursor=pointer]
+          - link "Hubungi Saya" [ref=e34] [cursor=pointer]:
+            - /url: "#contact"
+    - main [ref=e39]:
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - generic [ref=e46]: Web Developer
+            - generic [ref=e47]: •
+            - generic [ref=e48]: WITA 23:00:06
+          - heading "Membangun sistem web skalavel & pengalaman digital elegan." [level=1] [ref=e49]
+          - paragraph [ref=e50]: Hai, saya Satya. Menggabungkan arsitektur backend berkecepatan tinggi dengan keahlian antarmuka React & Next.js yang bersih, modular, dan responsif.
+          - generic [ref=e51]:
+            - link "Eksplorasi Proyek" [ref=e52] [cursor=pointer]:
+              - /url: "#projects"
+            - link "Diskusi Proyek" [ref=e56] [cursor=pointer]:
+              - /url: "#contact"
+            - link ">_ CLI" [ref=e58] [cursor=pointer]:
+              - /url: "#terminal"
+          - generic [ref=e62]:
+            - generic [ref=e63]: "Koneksi:"
+            - link "GitHub" [ref=e64] [cursor=pointer]:
+              - /url: https://github.com
+            - link "LinkedIn" [ref=e68] [cursor=pointer]:
+              - /url: https://linkedin.com
+            - button "satyadharma1609@gmail.com" [ref=e72] [cursor=pointer]
+        - generic [ref=e78]:
+          - generic [ref=e79]:
+            - generic [ref=e81]:
+              - img "Gede Satya Budi Dharma Wiguna"
+            - generic [ref=e82]:
+              - heading "Gede Satya Budi Dharma Wiguna" [level=3] [ref=e83]
+              - paragraph [ref=e84]: Web Developer
+              - paragraph [ref=e85]: Bali,Denpasar
+          - generic:
+            - paragraph: Tarik kartunya
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - text: Profil & Latar Belakang
+          - heading "Menyelesaikan Masalah Kompleks Melalui Arsitektur Kode yang Bersih" [level=2] [ref=e89]
+          - paragraph [ref=e90]: Keseimbangan antara ketelitian struktur data, performa server, dan estetika visual tingkat tinggi.
+        - generic [ref=e91]:
+          - generic [ref=e92]:
+            - heading "Tentang Saya & Latar Belakang" [level=3] [ref=e93]
+            - paragraph [ref=e94]: "Saya adalah seorang Software Engineer & Full-Stack Web Developer dengan pengalaman membangun sistem digital untuk perusahaan teknologi dan rintisan inovatif. Menguasai siklus hidup software secara menyeluruh: mulai dari desain skema basis data relasional hingga pengalaman pengguna akhir yang responsif."
+            - paragraph [ref=e95]: Bagi saya, perangkat lunak yang hebat tidak hanya sekadar berjalan, tetapi mudah dipelihara, diuji secara komprehensif, dan memberikan nilai nyata bagi pengguna dengan latensi seminimal mungkin.
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - generic [ref=e98]: Lokasi
+                - generic [ref=e99]: Bali / Jakarta, Indonesia (WIB)
+              - generic [ref=e100]:
+                - generic [ref=e101]: Pendidikan
+                - generic [ref=e102]: S.Kom - Rekayasa Perangkat Lunak / Ilmu Komputer
+              - generic [ref=e103]:
+                - generic [ref=e104]: Fokus Utama
+                - generic [ref=e105]: Full-Stack Web & Next.js Ecosystem
+              - generic [ref=e106]:
+                - generic [ref=e107]: Status
+                - generic [ref=e108]: Tersedia untuk Remote / Hybrid
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - heading "Frontend Craftsmanship" [level=4] [ref=e119]
+              - paragraph [ref=e120]: Membangun antarmuka dinamis dan responsif dengan Next.js 14, React Server Components, TypeScript, serta CSS modern yang mengutamakan aksesibilitas dan kemulusan 60fps.
+            - generic [ref=e121]:
+              - heading "Robust Backend & API" [level=4] [ref=e126]
+              - paragraph [ref=e127]: Merancang REST API, GraphQL, microservices efisien, autentikasi terproteksi dengan Node.js, Express, serta Golang untuk pemrosesan paralel berlatensi rendah.
+            - generic [ref=e128]:
+              - heading "DevOps & Cloud Architecture" [level=4] [ref=e132]
+              - paragraph [ref=e133]: Otomasi containerization dengan Docker, multi-environment CI/CD pipeline, edge compute Vercel, dan manajemen cache Redis untuk menjamin reliabilitas produksi.
+            - generic [ref=e134]:
+              - heading "Performance & Code Integrity" [level=4] [ref=e139]
+              - paragraph [ref=e140]: Penerapan clean code, pengujian otomatis (unit, integrasi, E2E), modularitas terisolasi, dan audit Core Web Vitals dengan skor Lighthouse 95+ secara konsisten.
+      - generic [ref=e142]:
+        - generic [ref=e143]:
+          - text: Kemampuan Teknis
+          - heading "Teknologi & Ekosistem Utama" [level=2] [ref=e144]
+          - paragraph [ref=e145]: Perangkat dan bahasa pemrograman yang saya gunakan setiap hari dalam lingkungan pengembangan produksi.
+        - generic [ref=e146]:
+          - button "Semua Keahlian" [ref=e147] [cursor=pointer]
+          - button "Frontend" [ref=e148] [cursor=pointer]
+          - button "Backend & API" [ref=e149] [cursor=pointer]
+          - button "Database & Cloud" [ref=e150] [cursor=pointer]
+          - button "Tools & Testing" [ref=e151] [cursor=pointer]
+        - generic [ref=e152]:
+          - generic [ref=e153]:
+            - generic [ref=e154]:
+              - generic [ref=e155]:
+                - generic [ref=e156]:
+                  - generic [ref=e157]: Next
+                  - generic [ref=e158]:
+                    - heading "React.js & Next.js 14" [level=4] [ref=e159]
+                    - text: 4+ Tahun
+                - generic [ref=e160]: Expert
+              - paragraph [ref=e161]: Server Components (RSC), SSR, ISR, kustom Hooks, dan arsitektur state responsif (Zustand/Redux).
+            - generic [ref=e163]:
+              - generic [ref=e164]: Tingkat Kemahiran
+              - generic [ref=e165]: 96%
+          - generic [ref=e168]:
+            - generic [ref=e169]:
+              - generic [ref=e170]:
+                - generic [ref=e171]:
+                  - generic [ref=e172]: CSS
+                  - generic [ref=e173]:
+                    - heading "Tailwind CSS & Modern UI" [level=4] [ref=e174]
+                    - text: 4+ Tahun
+                - generic [ref=e175]: Expert
+              - paragraph [ref=e176]: Sistem token desain, layout fluid responsif, glassmorphism, dan animasi performa tinggi 60fps.
+            - generic [ref=e178]:
+              - generic [ref=e179]: Tingkat Kemahiran
+              - generic [ref=e180]: 94%
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - generic [ref=e185]:
+                - generic [ref=e186]:
+                  - generic [ref=e187]: Node
+                  - generic [ref=e188]:
+                    - heading "Node.js & Express" [level=4] [ref=e189]
+                    - text: 4+ Tahun
+                - generic [ref=e190]: Expert
+              - paragraph [ref=e191]: RESTful architecture, modular middleware, JWT session security, dan komunikasi real-time WebSocket.
+            - generic [ref=e193]:
+              - generic [ref=e194]: Tingkat Kemahiran
+              - generic [ref=e195]: 92%
+          - generic [ref=e198]:
+            - generic [ref=e199]:
+              - generic [ref=e200]:
+                - generic [ref=e201]:
+                  - generic [ref=e202]: PG
+                  - generic [ref=e203]:
+                    - heading "PostgreSQL & Prisma / Drizzle" [level=4] [ref=e204]
+                    - text: 4+ Tahun
+                - generic [ref=e205]: Expert
+              - paragraph [ref=e206]: Skema relasional ternormalisasi, query indexing cepat, transaksi ACID, dan migrasi terotomasi.
+            - generic [ref=e208]:
+              - generic [ref=e209]: Tingkat Kemahiran
+              - generic [ref=e210]: 91%
+          - generic [ref=e213]:
+            - generic [ref=e214]:
+              - generic [ref=e215]:
+                - generic [ref=e216]:
+                  - generic [ref=e217]: Cloud
+                  - generic [ref=e218]:
+                    - heading "Docker & AWS / Vercel Cloud" [level=4] [ref=e219]
+                    - text: 3+ Tahun
+                - generic [ref=e220]: Advanced
+              - paragraph [ref=e221]: Multi-stage containerization, docker-compose, edge deployment, dan automated CI/CD pipeline.
+            - generic [ref=e223]:
+              - generic [ref=e224]: Tingkat Kemahiran
+              - generic [ref=e225]: 87%
+          - generic [ref=e228]:
+            - generic [ref=e229]:
+              - generic [ref=e230]:
+                - generic [ref=e231]:
+                  - generic [ref=e232]: Git
+                  - generic [ref=e233]:
+                    - heading "Git & GitHub Actions CI/CD" [level=4] [ref=e234]
+                    - text: 4+ Tahun
+                - generic [ref=e235]: Expert
+              - paragraph [ref=e236]: Branching strategies, code review workflows, automated test runners, dan semantic versioning.
+            - generic [ref=e238]:
+              - generic [ref=e239]: Tingkat Kemahiran
+              - generic [ref=e240]: 95%
+          - generic [ref=e243]:
+            - generic [ref=e244]:
+              - generic [ref=e245]:
+                - generic [ref=e246]:
+                  - generic [ref=e247]: UI
+                  - generic [ref=e248]:
+                    - heading "Figma to Code & Web Vitals" [level=4] [ref=e249]
+                    - text: 4+ Tahun
+                - generic [ref=e250]: Expert
+              - paragraph [ref=e251]: Penerjemahan pixel-perfect, aksesibilitas WCAG, dan optimalisasi audit Google Lighthouse 95+.
+            - generic [ref=e253]:
+              - generic [ref=e254]: Tingkat Kemahiran
+              - generic [ref=e255]: 94%
+      - generic [ref=e259]:
+        - generic [ref=e260]:
+          - text: Portofolio Karya
+          - heading "Proyek Unggulan Terpilih" [level=2] [ref=e261]
+          - paragraph [ref=e262]: Aplikasi web end-to-end yang dibangun dengan fokus pada arsitektur bersih, latensi rendah, dan pengalaman pengguna optimal.
+        - generic [ref=e263]:
+          - button "Semua Proyek" [ref=e264] [cursor=pointer]
+          - button "Full-Stack" [ref=e265] [cursor=pointer]
+          - button "Frontend" [ref=e266] [cursor=pointer]
+          - button "Backend & Systems" [ref=e267] [cursor=pointer]
+        - generic [ref=e268]:
+          - article [ref=e269]:
+            - generic [ref=e270]:
+              - generic [ref=e271]:
+                - img "Nexa SaaS – Enterprise Analytics & Workflow" [ref=e272]
+                - generic [ref=e273]: Featured Full-Stack
+              - generic [ref=e274]:
+                - generic [ref=e275]:
+                  - generic [ref=e276]: Next.js 14
+                  - generic [ref=e277]: TypeScript
+                  - generic [ref=e278]: Node.js
+                  - generic [ref=e279]: PostgreSQL
+                  - generic [ref=e280]: "+2"
+                - heading "Nexa SaaS – Enterprise Analytics & Workflow" [level=3] [ref=e281]
+                - paragraph [ref=e282]: Platform SaaS analitik multi-tenant dengan dasbor metrik real-time, manajemen tim, pelacakan langganan MRR, dan visualisasi data interaktif.
+                - generic [ref=e283]:
+                  - generic [ref=e284]:
+                    - generic [ref=e285]: < 85ms
+                    - text: Latensi API
+                  - generic [ref=e286]:
+                    - generic [ref=e287]: 99.98%
+                    - text: Keandalan Uptime
+                  - generic [ref=e288]:
+                    - generic [ref=e289]: 4.5k+
+                    - text: Pengguna Aktif
+            - generic [ref=e290]:
+              - button "Detail Arsitektur" [ref=e291] [cursor=pointer]
+              - link "GitHub Repository" [ref=e297] [cursor=pointer]:
+                - /url: https://github.com
+          - article [ref=e300]:
+            - generic [ref=e301]:
+              - generic [ref=e302]:
+                - img "Urban Market – Modern Headless Commerce" [ref=e303]
+                - generic [ref=e304]: E-Commerce Web
+              - generic [ref=e305]:
+                - generic [ref=e306]:
+                  - generic [ref=e307]: React
+                  - generic [ref=e308]: Next.js
+                  - generic [ref=e309]: Tailwind CSS
+                  - generic [ref=e310]: Express API
+                  - generic [ref=e311]: "+2"
+                - heading "Urban Market – Modern Headless Commerce" [level=3] [ref=e312]
+                - paragraph [ref=e313]: Platform e-commerce responsif dengan katalog instan, filter multi-atribut dinamis, keranjang belanja terenkripsi, dan alur checkout minimalis 3 langkah.
+                - generic [ref=e314]:
+                  - generic [ref=e315]:
+                    - generic [ref=e316]: 99/100
+                    - text: Skor Lighthouse
+                  - generic [ref=e317]:
+                    - generic [ref=e318]: 3-Step
+                    - text: Alur Checkout
+                  - generic [ref=e319]:
+                    - generic [ref=e320]: 100%
+                    - text: Mobile Responsif
+            - generic [ref=e321]:
+              - button "Detail Arsitektur" [ref=e322] [cursor=pointer]
+              - link "GitHub Repository" [ref=e328] [cursor=pointer]:
+                - /url: https://github.com
+          - article [ref=e331]:
+            - generic [ref=e332]:
+              - generic [ref=e333]:
+                - img "NeuroFlow – Visual AI Workflow Builder" [ref=e334]
+                - generic [ref=e335]: AI DevTools
+              - generic [ref=e336]:
+                - generic [ref=e337]:
+                  - generic [ref=e338]: TypeScript
+                  - generic [ref=e339]: Python
+                  - generic [ref=e340]: FastAPI
+                  - generic [ref=e341]: React Flow
+                  - generic [ref=e342]: "+2"
+                - heading "NeuroFlow – Visual AI Workflow Builder" [level=3] [ref=e343]
+                - paragraph [ref=e344]: Aplikasi visual node-graph builder untuk merangkai pipeline LLM agenik, pengujian prompt interaktif, dan inspeksi kode generasi secara real-time.
+                - generic [ref=e345]:
+                  - generic [ref=e346]:
+                    - generic [ref=e347]: Streaming
+                    - text: Respons Token
+                  - generic [ref=e348]:
+                    - generic [ref=e349]: DAG Engine
+                    - text: Eksekusi Node
+                  - generic [ref=e350]:
+                    - generic [ref=e351]: Zero-Lag
+                    - text: Canvas Visual
+            - generic [ref=e352]:
+              - button "Detail Arsitektur" [ref=e353] [cursor=pointer]
+              - link "GitHub Repository" [ref=e359] [cursor=pointer]:
+                - /url: https://github.com
+      - generic [ref=e363]:
+        - generic [ref=e364]:
+          - generic [ref=e365]: Developer Sandbox CLI
+          - heading "Terminal CLI Interaktif" [level=2] [ref=e369]
+          - paragraph [ref=e370]: Jelajahi spesifikasi teknis dan portofolio saya langsung dari konsol perintah.
+        - generic [ref=e371]:
+          - generic [ref=e372]:
+            - generic [ref=e373]: gede@macbook-pro:~ (zsh)
+            - generic [ref=e378]: Node v20.x
+          - generic [ref=e379]: Selamat datang di Gede Satya Budi Dharma Wiguna CLI v2.4. Ketik 'help' atau klik tombol pintasan di bawah untuk menjelajah.
+          - generic [ref=e382]:
+            - generic [ref=e383]: gede@dev:~$
+            - textbox "type 'help', 'skills', 'bio'..." [ref=e384]
+            - button "Jalankan perintah" [ref=e385] [cursor=pointer]
+          - generic [ref=e389]:
+            - generic [ref=e390]: "Pintasan:"
+            - button "help" [ref=e391] [cursor=pointer]
+            - button "bio" [ref=e392] [cursor=pointer]
+            - button "skills" [ref=e393] [cursor=pointer]
+            - button "projects" [ref=e394] [cursor=pointer]
+            - button "contact" [ref=e395] [cursor=pointer]
+            - button "hire" [ref=e396] [cursor=pointer]
+            - button "clear" [ref=e397] [cursor=pointer]
+      - generic [ref=e399]:
+        - generic [ref=e400]:
+          - text: Perjalanan Karir
+          - heading "Pengalaman & Riwayat Pendidikan" [level=2] [ref=e401]
+          - paragraph [ref=e402]: Rekam jejak kontribusi dalam merancang sistem web, memimpin delivery fitur, dan meningkatkan keandalan infrastruktur.
+        - generic [ref=e403]:
+          - generic [ref=e409]:
+            - generic [ref=e410]:
+              - generic [ref=e411]: 2023 — Sekarang
+              - generic [ref=e412]: Penuh Waktu
+            - heading "Senior Full-Stack Engineer" [level=3] [ref=e413]
+            - heading "TechScale Labs • Jakarta / Hybrid" [level=4] [ref=e414]
+            - paragraph [ref=e415]: Memimpin tim rekayasa web dalam merancang arsitektur analitik SaaS multi-tenant berbasis Next.js 14 dan microservices Golang. Berhasil memangkas waktu muat halaman hingga 40% dan mengorkestrasi CI/CD zero-downtime deployment.
+            - generic [ref=e416]:
+              - generic [ref=e417]: Next.js 14
+              - generic [ref=e418]: TypeScript
+              - generic [ref=e419]: Golang
+              - generic [ref=e420]: PostgreSQL
+              - generic [ref=e421]: AWS ECS
+              - generic [ref=e422]: Docker
+          - generic [ref=e428]:
+            - generic [ref=e429]:
+              - generic [ref=e430]: 2021 — 2023
+              - generic [ref=e431]: Penuh Waktu
+            - heading "Full-Stack Web Developer" [level=3] [ref=e432]
+            - heading "Innovate Digital Studio • Jakarta" [level=4] [ref=e433]
+            - paragraph [ref=e434]: Membangun lebih dari 12 aplikasi web berskala enterprise untuk klien teknologi dan e-commerce. Mengintegrasikan payment gateway Stripe & Midtrans serta merancang caching Redis berkecepatan tinggi.
+            - generic [ref=e435]:
+              - generic [ref=e436]: React
+              - generic [ref=e437]: Node.js
+              - generic [ref=e438]: Express
+              - generic [ref=e439]: PostgreSQL
+              - generic [ref=e440]: Redis
+              - generic [ref=e441]: Tailwind CSS
+          - generic [ref=e447]:
+            - generic [ref=e448]:
+              - generic [ref=e449]: 2020 — 2021
+              - generic [ref=e450]: Penuh Waktu
+            - heading "Frontend Web Developer" [level=3] [ref=e451]
+            - heading "Nusantara Creative Agency • Bandung" [level=4] [ref=e452]
+            - paragraph [ref=e453]: Mengembangkan antarmuka landing page interaktif pixel-perfect, optimalisasi performa animasi web, serta mencapai skor 95+ secara konsisten pada audit Google Core Web Vitals.
+            - generic [ref=e454]:
+              - generic [ref=e455]: JavaScript (ES6+)
+              - generic [ref=e456]: React
+              - generic [ref=e457]: CSS3 / Sass
+              - generic [ref=e458]: Figma
+              - generic [ref=e459]: Webpack
+          - generic [ref=e465]:
+            - generic [ref=e466]:
+              - generic [ref=e467]: 2016 — 2020
+              - generic [ref=e468]: Pendidikan
+            - heading "Sarjana Komputer (S.Kom) - Ilmu Komputer" [level=3] [ref=e469]
+            - heading "Universitas Indonesia (UI) • Depok" [level=4] [ref=e470]
+            - paragraph [ref=e471]: Fokus studi pada Rekayasa Perangkat Lunak, Struktur Data & Algoritma, Basis Data Terdistribusi, dan Jaringan Komputer. Lulus dengan predikat Sangat Memuaskan (IPK 3.82/4.00).
+            - generic [ref=e472]:
+              - generic [ref=e473]: Data Structures
+              - generic [ref=e474]: Algorithms
+              - generic [ref=e475]: Software Engineering
+              - generic [ref=e476]: Databases
+      - generic [ref=e478]:
+        - generic [ref=e479]:
+          - text: Rekomendasi Rekan
+          - heading "Apa Kata Pemimpin Tim & Kolega" [level=2] [ref=e480]
+          - paragraph [ref=e481]: Umpan balik langsung dari Tech Lead, Product Manager, dan rekan arsitek software.
+        - generic [ref=e482]:
+          - generic [ref=e483]:
+            - paragraph [ref=e496]: “Alex adalah engineer yang sangat teliti, cepat memahami arsitektur kompleks, dan komunikasi timnya luar biasa.”
+            - generic [ref=e497]:
+              - generic [ref=e498]: DL
+              - generic [ref=e499]:
+                - heading "Dewi Lestari" [level=4] [ref=e500]
+                - paragraph [ref=e501]: Engineering Manager @ TokoKreatif
+          - generic [ref=e502]:
+            - paragraph [ref=e515]: "“Alex memiliki keahlian langka: sangat teliti pada ketahanan arsitektur backend dan efisiensi basis data, namun tetap memiliki cita rasa estetika tinggi dalam menyajikan UI/UX modern yang memikat pengguna.”"
+            - generic [ref=e516]:
+              - generic [ref=e517]: BH
+              - generic [ref=e518]:
+                - heading "Budi Hartono" [level=4] [ref=e519]
+                - paragraph [ref=e520]: VP of Engineering @ TechScale Labs
+          - generic [ref=e521]:
+            - paragraph [ref=e534]: “Kecepatan delivery dan kebersihan kode Alex sangat luar biasa. Proyek SaaS kami rilis 2 minggu lebih cepat dari target berkat pemisahan modul yang rapi dan dokumentasi API yang jelas.”
+            - generic [ref=e535]:
+              - generic [ref=e536]: SL
+              - generic [ref=e537]:
+                - heading "Sarah Lestari" [level=4] [ref=e538]
+                - paragraph [ref=e539]: Product Lead @ Innovate Studio
+          - generic [ref=e540]:
+            - paragraph [ref=e553]: “Komunikatif, solutif, dan selalu memegang teguh standar best practice. Alex adalah tipe rekan insinyur yang membuat seluruh tim merasa percaya diri saat melakukan rilis ke tahap produksi.”
+            - generic [ref=e554]:
+              - generic [ref=e555]: MR
+              - generic [ref=e556]:
+                - heading "Michael Ryan" [level=4] [ref=e557]
+                - paragraph [ref=e558]: Principal Software Architect
+      - generic [ref=e560]:
+        - generic [ref=e561]:
+          - text: Kontak & Diskusi
+          - heading "Mari Bahas Proyek & Peluang Anda" [level=2] [ref=e562]
+          - paragraph [ref=e563]: Punya lowongan kerja rekayasa web, proyek freelance, atau ingin berkonsultasi arsitektur? Hubungi saya kapan saja.
+        - generic [ref=e564]:
+          - generic [ref=e565]:
+            - heading "Saluran Komunikasi Langsung" [level=3] [ref=e566]
+            - paragraph [ref=e567]: Saya biasanya merespons pesan dalam kurun waktu kurang dari 24 jam pada hari kerja.
+            - generic [ref=e568]:
+              - generic [ref=e569]:
+                - generic [ref=e575]:
+                  - generic [ref=e576]: Email
+                  - link "satyadharma1609@gmail.com" [ref=e577] [cursor=pointer]:
+                    - /url: mailto:satyadharma1609@gmail.com
+                - button "Salin email" [ref=e578] [cursor=pointer]
+              - generic [ref=e587]:
+                - generic [ref=e588]: WhatsApp
+                - link "0895394043443" [ref=e589] [cursor=pointer]:
+                  - /url: https://wa.me/6281234567890
+              - generic [ref=e595]:
+                - generic [ref=e596]: Lokasi & Zona Waktu
+                - text: Bali,Denpasar
+            - generic [ref=e597]: Tersedia untuk peluang kerja Remote maupun On-site (Bali,Denpasar).
+          - generic [ref=e601]:
+            - generic [ref=e602]:
+              - generic [ref=e603]:
+                - generic [ref=e604]: Nama Lengkap *
+                - textbox "e.g. Gede Satya Budi Dharma Wiguna" [ref=e605]
+              - generic [ref=e606]:
+                - generic [ref=e607]: Alamat Email *
+                - textbox "alex@company.com" [ref=e608]
+            - generic [ref=e609]:
+              - generic [ref=e610]: Topik Diskusi *
+              - combobox [ref=e611]:
+                - option "Pilih kategori kebutuhan..." [disabled] [selected]
+                - option "Peluang Kerja Penuh Waktu (Full-Time Role)"
+                - option "Proyek Freelance Web / Kontrak"
+                - option "Konsultasi Arsitektur Perangkat Lunak"
+                - option "Pertanyaan Umum / Lainnya"
+            - generic [ref=e612]:
+              - generic [ref=e613]:
+                - generic [ref=e614]: Pesan atau Rincian Proyek *
+                - generic [ref=e615]: 0/500
+              - textbox "Ceritakan ringkasan tujuan, jangka waktu, atau kebutuhan teknologi Anda..." [ref=e616]
+            - button "Kirim Pesan Sekarang" [ref=e617] [cursor=pointer]
+    - contentinfo [ref=e622]:
+      - generic [ref=e623]:
+        - generic [ref=e624]:
+          - generic [ref=e625]:
+            - generic [ref=e626]: GS
+            - generic [ref=e627]: Gede Satya Budi Dharma Wiguna
+          - paragraph [ref=e628]: Web Developer • Next.js & TypeScript
+        - generic [ref=e629]:
+          - link "Tentang" [ref=e630] [cursor=pointer]:
+            - /url: "#about"
+          - link "Keahlian" [ref=e631] [cursor=pointer]:
+            - /url: "#skills"
+          - link "Proyek" [ref=e632] [cursor=pointer]:
+            - /url: "#projects"
+          - link "Pengalaman" [ref=e633] [cursor=pointer]:
+            - /url: "#experience"
+          - link "Terminal" [ref=e634] [cursor=pointer]:
+            - /url: "#terminal"
+          - link "Kontak" [ref=e635] [cursor=pointer]:
+            - /url: "#contact"
+          - link "[CMS]" [ref=e636] [cursor=pointer]:
+            - /url: /admin
+        - generic [ref=e637]:
+          - generic [ref=e638]: © 2026 Gede Satya Budi Dharma Wiguna.
+          - button "Kembali ke atas" [ref=e639] [cursor=pointer]
+  - alert [ref=e642]

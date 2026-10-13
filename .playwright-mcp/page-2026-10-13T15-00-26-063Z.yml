@@ -1,0 +1,69 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]: This XML file does not appear to have any style information associated with it. The document tree is shown below.
+  - generic [ref=f2e4]:
+    - generic [ref=f2e5]:
+      - generic [ref=f2e6] [cursor=pointer]
+      - generic [ref=f2e7]:
+        - text: <urlset
+        - generic [ref=f2e8]: xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        - generic [ref=f2e9]: xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        - text: ">"
+    - generic [ref=f2e11]:
+      - generic [ref=f2e12]:
+        - generic [ref=f2e13] [cursor=pointer]
+        - generic [ref=f2e14]: <url>
+      - generic [ref=f2e15]:
+        - generic [ref=f2e16]:
+          - generic [ref=f2e17]: <loc>
+          - text: https://satyadharma.dev
+          - generic [ref=f2e18]: </loc>
+        - generic [ref=f2e19]:
+          - generic [ref=f2e20]:
+            - generic [ref=f2e21] [cursor=pointer]
+            - generic [ref=f2e22]: <image:image>
+          - generic [ref=f2e24]:
+            - generic [ref=f2e25]: <image:loc>
+            - text: https://satyadharma.dev/uploads/foto_wasit_satya-1791865121487.png
+            - generic [ref=f2e26]: </image:loc>
+          - generic [ref=f2e27]: </image:image>
+        - generic [ref=f2e29]:
+          - generic [ref=f2e30]:
+            - generic [ref=f2e31] [cursor=pointer]
+            - generic [ref=f2e32]: <image:image>
+          - generic [ref=f2e34]:
+            - generic [ref=f2e35]: <image:loc>
+            - text: https://satyadharma.dev/assets/img/project-saas.jpg
+            - generic [ref=f2e36]: </image:loc>
+          - generic [ref=f2e37]: </image:image>
+        - generic [ref=f2e39]:
+          - generic [ref=f2e40]:
+            - generic [ref=f2e41] [cursor=pointer]
+            - generic [ref=f2e42]: <image:image>
+          - generic [ref=f2e44]:
+            - generic [ref=f2e45]: <image:loc>
+            - text: https://satyadharma.dev/assets/img/project-ecommerce.jpg
+            - generic [ref=f2e46]: </image:loc>
+          - generic [ref=f2e47]: </image:image>
+        - generic [ref=f2e49]:
+          - generic [ref=f2e50]:
+            - generic [ref=f2e51] [cursor=pointer]
+            - generic [ref=f2e52]: <image:image>
+          - generic [ref=f2e54]:
+            - generic [ref=f2e55]: <image:loc>
+            - text: https://satyadharma.dev/assets/img/project-ai.jpg
+            - generic [ref=f2e56]: </image:loc>
+          - generic [ref=f2e57]: </image:image>
+        - generic [ref=f2e59]:
+          - generic [ref=f2e60]: <lastmod>
+          - text: 2026-10-13T14:53:54.476Z
+          - generic [ref=f2e61]: </lastmod>
+        - generic [ref=f2e62]:
+          - generic [ref=f2e63]: <changefreq>
+          - text: monthly
+          - generic [ref=f2e64]: </changefreq>
+        - generic [ref=f2e65]:
+          - generic [ref=f2e66]: <priority>
+          - text: "1"
+          - generic [ref=f2e67]: </priority>
+      - generic [ref=f2e68]: </url>
+    - generic [ref=f2e70]: </urlset>
