@@ -3,7 +3,7 @@ import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 export async function GET() {
   const matchingEnvKeys = Object.keys(process.env).filter((k) =>
-    /supabase|postgres|database|next_public/i.test(k)
+    /supabase|postgres|database|next_public|key|secret|token|anon|publishable/i.test(k)
   );
 
   const envStatus = {
