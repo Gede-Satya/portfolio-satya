@@ -75,9 +75,12 @@ export async function DELETE(request: Request) {
       );
     }
 
+    const targetName = name.trim().toLowerCase();
     const content = await getPortfolioContentAsync();
     const initialLen = content.skills.length;
-    content.skills = content.skills.filter((s) => s.name !== name);
+    content.skills = content.skills.filter(
+      (s) => s.name.trim().toLowerCase() !== targetName
+    );
 
     if (content.skills.length === initialLen) {
       return NextResponse.json(
@@ -93,8 +96,9 @@ export async function DELETE(request: Request) {
       message: "Keahlian berhasil dihapus",
     });
   } catch (error) {
+    console.error("DELETE /api/skills error:", error);
     return NextResponse.json(
-      { success: false, message: "Gagal menghapus keahlian" },
+      { success: false, message: "Gagal menghapus keahlian", error: String(error) },
       { status: 500 }
     );
   }

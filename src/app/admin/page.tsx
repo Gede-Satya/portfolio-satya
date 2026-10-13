@@ -247,6 +247,8 @@ export default function AdminDashboardPage() {
       if (data.success) {
         showToast("Keahlian berhasil dihapus");
         loadData();
+      } else {
+        showToast(data.message || "Gagal menghapus keahlian");
       }
     } catch (err) {
       showToast("Gagal menghapus keahlian");

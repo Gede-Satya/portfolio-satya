@@ -260,10 +260,10 @@ export function getPortfolioContent(): PortfolioContent {
         ...defaults.heroStats,
         ...(parsed.heroStats || {}),
       },
-      projects: parsed.projects?.length ? parsed.projects : defaults.projects,
-      skills: parsed.skills?.length ? parsed.skills : defaults.skills,
-      timeline: parsed.timeline?.length ? parsed.timeline : defaults.timeline,
-      testimonials: (parsed.testimonials?.length ? parsed.testimonials : defaults.testimonials).map(
+      projects: Array.isArray(parsed.projects) ? parsed.projects : defaults.projects,
+      skills: Array.isArray(parsed.skills) ? parsed.skills : defaults.skills,
+      timeline: Array.isArray(parsed.timeline) ? parsed.timeline : defaults.timeline,
+      testimonials: (Array.isArray(parsed.testimonials) ? parsed.testimonials : defaults.testimonials).map(
         (t: TestimonialItem, idx: number) => ({
           ...t,
           id: t.id || `testi-${idx + 1}`,

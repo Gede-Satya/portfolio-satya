@@ -364,21 +364,6 @@
   ],
   "skills": [
     {
-      "name": "TypeScript",
-      "category": "frontend",
-      "level": "Expert",
-      "exp": {
-        "id": "4+ Tahun",
-        "en": "4+ Years"
-      },
-      "desc": {
-        "id": "Strict type-safety, generics, utility types, dan refactoring terpercaya untuk aplikasi skala enterprise.",
-        "en": "Strict type-safety, advanced generics, utility types, and confident large-scale refactoring."
-      },
-      "progress": 95,
-      "iconText": "TS"
-    },
-    {
       "name": "React.js & Next.js 14",
       "category": "frontend",
       "level": "Expert",
@@ -422,21 +407,6 @@
       },
       "progress": 92,
       "iconText": "Node"
-    },
-    {
-      "name": "Golang (Go)",
-      "category": "backend",
-      "level": "Advanced",
-      "exp": {
-        "id": "2+ Tahun",
-        "en": "2+ Years"
-      },
-      "desc": {
-        "id": "Microservice berkecepatan tinggi, concurrency goroutines, dan endpoint dengan latensi mikro.",
-        "en": "High-throughput microservices, concurrency with goroutines/channels, and ultra-low latency endpoints."
-      },
-      "progress": 82,
-      "iconText": "Go"
     },
     {
       "name": "GraphQL & REST APIs",

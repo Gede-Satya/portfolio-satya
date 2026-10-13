@@ -20,7 +20,7 @@ export const Skills: React.FC<SkillsProps> = ({ lang, skills }) => {
     { id: "tools", label: "Tools & Testing" },
   ];
 
-  const sourceSkills = skills || skillsData;
+  const sourceSkills = skills ?? skillsData;
   const filteredSkills =
     activeCategory === "all"
       ? sourceSkills
