@@ -424,21 +424,6 @@
       "iconText": "PG"
     },
     {
-      "name": "Redis In-Memory Cache",
-      "category": "database",
-      "level": "Advanced",
-      "exp": {
-        "id": "3+ Tahun",
-        "en": "3+ Years"
-      },
-      "desc": {
-        "id": "Caching tier, message queue publish/subscribe, rate limiter, dan session store berkecepatan tinggi.",
-        "en": "High-speed caching layers, pub/sub message brokers, distributed rate limiters, and session storage."
-      },
-      "progress": 86,
-      "iconText": "Redis"
-    },
-    {
       "name": "Docker & AWS / Vercel Cloud",
       "category": "database",
       "level": "Advanced",
