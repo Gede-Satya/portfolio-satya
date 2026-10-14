@@ -87,16 +87,40 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
           ))}
         </div>
 
-        {/* Overview */}
+        {/* Engineering Metrics Ribbon */}
+        {project.metrics && project.metrics.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-900/80 border border-zinc-200 dark:border-zinc-800 mb-6 text-center">
+            {project.metrics.map((m, i) => (
+              <div key={i}>
+                <span className="block font-extrabold text-sm sm:text-base text-indigo-600 dark:text-indigo-400 font-mono">
+                  {m.val}
+                </span>
+                <span className="text-[11px] text-zinc-500 font-medium">
+                  {m.lbl[lang] || m.lbl.id}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Overview & Architecture Details */}
         <div className="space-y-6 text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">
+          {/* Overview */}
           <div>
             <h4 className="flex items-center gap-2 text-base font-bold text-zinc-900 dark:text-white mb-2">
               <Layers className="w-4 h-4 text-indigo-500" />
               <span>{lang === "id" ? "Ikhtisar Proyek" : "Project Overview"}</span>
             </h4>
-            <p>{project.details.overview[lang]}</p>
+            <p>
+              {project.details?.overview?.[lang] ||
+                project.details?.overview?.id ||
+                project.summary?.[lang] ||
+                project.summary?.id ||
+                "-"}
+            </p>
           </div>
 
+          {/* System Architecture */}
           <div>
             <h4 className="flex items-center gap-2 text-base font-bold text-zinc-900 dark:text-white mb-2">
               <Cpu className="w-4 h-4 text-emerald-500" />
@@ -104,39 +128,50 @@ export const ProjectModal: React.FC<ProjectModalProps> = ({
                 {lang === "id" ? "Desain Arsitektur Sistem" : "System Architecture"}
               </span>
             </h4>
-            <p>{project.details.architecture[lang]}</p>
+            <p className="whitespace-pre-line">
+              {project.details?.architecture?.[lang] ||
+                project.details?.architecture?.id ||
+                (lang === "id"
+                  ? "Arsitektur sistem belum didokumentasikan untuk proyek ini."
+                  : "System architecture has not been documented for this project yet.")}
+            </p>
           </div>
 
           {/* Highlights */}
-          <div>
-            <h4 className="flex items-center gap-2 text-base font-bold text-zinc-900 dark:text-white mb-3">
-              <CheckCircle className="w-4 h-4 text-cyan-500" />
-              <span>
-                {lang === "id" ? "Sorotan Fitur & Keamanan" : "Key Highlights & Security"}
-              </span>
-            </h4>
-            <ul className="space-y-2">
-              {project.details.highlights[lang].map((highlight, idx) => (
-                <li key={idx} className="flex items-start gap-2.5">
-                  <span className="text-indigo-500 font-bold mt-0.5">•</span>
-                  <span>{highlight}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {((project.details?.highlights?.[lang] || project.details?.highlights?.id || []).length > 0) && (
+            <div>
+              <h4 className="flex items-center gap-2 text-base font-bold text-zinc-900 dark:text-white mb-3">
+                <CheckCircle className="w-4 h-4 text-cyan-500" />
+                <span>
+                  {lang === "id" ? "Sorotan Fitur & Keamanan" : "Key Highlights & Security"}
+                </span>
+              </h4>
+              <ul className="space-y-2">
+                {(project.details?.highlights?.[lang] || project.details?.highlights?.id || []).map((highlight, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5">
+                    <span className="text-indigo-500 font-bold mt-0.5">•</span>
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Challenge Solved */}
-          <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-zinc-800 dark:text-zinc-200">
-            <h4 className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
-              <AlertCircle className="w-4 h-4" />
-              <span>
-                {lang === "id" ? "Tantangan Rekayasa & Solusi" : "Engineering Challenge & Solution"}
-              </span>
-            </h4>
-            <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300">
-              {project.details.challengesSolved[lang]}
-            </p>
-          </div>
+          {(project.details?.challengesSolved?.[lang] || project.details?.challengesSolved?.id) && (
+            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-zinc-800 dark:text-zinc-200">
+              <h4 className="flex items-center gap-2 text-sm font-bold text-amber-700 dark:text-amber-400 mb-1">
+                <AlertCircle className="w-4 h-4" />
+                <span>
+                  {lang === "id" ? "Tantangan Rekayasa & Solusi" : "Engineering Challenge & Solution"}
+                </span>
+              </h4>
+              <p className="text-xs sm:text-sm text-zinc-700 dark:text-zinc-300 whitespace-pre-line">
+                {project.details?.challengesSolved?.[lang] ||
+                  project.details?.challengesSolved?.id}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Modal Actions */}

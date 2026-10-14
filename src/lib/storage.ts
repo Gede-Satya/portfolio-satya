@@ -25,6 +25,7 @@ export interface PillarItem {
   title: { id: string; en: string };
   desc: { id: string; en: string };
   icon: "layout" | "server" | "cloud" | "cpu";
+  visible?: boolean;
 }
 
 export interface AboutContent {

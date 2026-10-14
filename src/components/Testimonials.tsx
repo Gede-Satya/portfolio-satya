@@ -14,7 +14,10 @@ export const Testimonials: React.FC<TestimonialsProps> = ({
   lang,
   testimonials,
 }) => {
-  const items = testimonials?.length ? testimonials : testimonialsData;
+  const allItems = testimonials?.length ? testimonials : testimonialsData;
+  const items = allItems.filter((item) => item.visible !== false);
+
+  if (items.length === 0) return null;
 
   return (
     <section className="py-20 border-t border-zinc-200/60 dark:border-zinc-800/60">

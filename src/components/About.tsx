@@ -3,7 +3,7 @@
 import React from "react";
 import { Layout, Server, Cloud, Cpu, CheckCircle2 } from "lucide-react";
 import { Language } from "@/types/portfolio";
-import { AboutContent, PortfolioContent } from "@/lib/storage";
+import { AboutContent, PortfolioContent, PillarItem } from "@/lib/storage";
 
 interface AboutProps {
   lang: Language;
@@ -26,46 +26,51 @@ export const About: React.FC<AboutProps> = ({ lang, about, profile }) => {
     }
   };
 
-  const defaultPillars = [
+  const defaultPillars: PillarItem[] = [
     {
       id: "p1",
-      icon: "layout" as const,
+      icon: "layout",
       title: { id: "Frontend Craftsmanship", en: "Frontend Craftsmanship" },
       desc: {
         id: "Membangun antarmuka dinamis dan responsif dengan Next.js 14, React Server Components, TypeScript, serta CSS modern yang mengutamakan aksesibilitas dan kemulusan 60fps.",
         en: "Crafting fluid, high-fidelity responsive user experiences with Next.js 14, React Server Components, TypeScript, and modern CSS tuned for WCAG accessibility.",
       },
+      visible: true,
     },
     {
       id: "p2",
-      icon: "server" as const,
+      icon: "server",
       title: { id: "Robust Backend & API", en: "Robust Backend & API" },
       desc: {
         id: "Merancang REST API, GraphQL, microservices efisien, autentikasi terproteksi dengan Node.js, Express, serta Golang untuk pemrosesan paralel berlatensi rendah.",
         en: "Engineering resilient REST and GraphQL microservices, hardened auth workflows, and concurrent event pipelines via Node.js, Express, and Golang.",
       },
+      visible: true,
     },
     {
       id: "p3",
-      icon: "cloud" as const,
+      icon: "cloud",
       title: { id: "DevOps & Cloud Architecture", en: "DevOps & Cloud Architecture" },
       desc: {
         id: "Otomasi containerization dengan Docker, multi-environment CI/CD pipeline, edge compute Vercel, dan manajemen cache Redis untuk menjamin reliabilitas produksi.",
         en: "Containerizing services via Docker, automated zero-downtime CI/CD workflows, edge runtime caching, and Redis layers ensuring 99.9% uptime reliability.",
       },
+      visible: true,
     },
     {
       id: "p4",
-      icon: "cpu" as const,
+      icon: "cpu",
       title: { id: "Performance & Code Integrity", en: "Performance & Code Integrity" },
       desc: {
         id: "Penerapan clean code, pengujian otomatis (unit, integrasi, E2E), modularitas terisolasi, dan audit Core Web Vitals dengan skor Lighthouse 95+ secara konsisten.",
         en: "Disciplined clean code principles, automated test coverage (unit, integration, E2E), strict decoupling, and sub-100ms response targets with 95+ Lighthouse audits.",
       },
+      visible: true,
     },
   ];
 
-  const pillarsList = about?.pillars?.length ? about.pillars : defaultPillars;
+  const rawPillars: PillarItem[] = about?.pillars?.length ? about.pillars : defaultPillars;
+  const pillarsList = rawPillars.filter((p) => p.visible !== false);
 
   const kicker =
     about?.kicker?.[lang] ||

@@ -25,10 +25,11 @@ export const Projects: React.FC<ProjectsProps> = ({ lang, projects }) => {
   ];
 
   const sourceProjects = projects || projectsData;
+  const visibleProjects = sourceProjects.filter((p) => p.visible !== false);
   const filteredProjects =
     filter === "all"
-      ? sourceProjects
-      : sourceProjects.filter((p) => p.category === filter);
+      ? visibleProjects
+      : visibleProjects.filter((p) => p.category === filter);
 
   return (
     <section id="projects" className="py-20 border-t border-zinc-200/60 dark:border-zinc-800/60">
@@ -66,8 +67,15 @@ export const Projects: React.FC<ProjectsProps> = ({ lang, projects }) => {
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {filteredProjects.map((project: ProjectItem) => (
+        {filteredProjects.length === 0 ? (
+          <div className="text-center py-16 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-800 text-zinc-500 font-mono text-xs">
+            {lang === "id"
+              ? "Tidak ada proyek yang ditampilkan pada kategori ini."
+              : "No projects are currently visible in this category."}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {filteredProjects.map((project: ProjectItem) => (
             <article
               key={project.id}
               className="rounded-3xl glass-panel overflow-hidden border border-zinc-200/80 dark:border-zinc-800 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 group"
@@ -157,6 +165,7 @@ export const Projects: React.FC<ProjectsProps> = ({ lang, projects }) => {
             </article>
           ))}
         </div>
+        )}
       </div>
 
       {/* Modal Dialog */}

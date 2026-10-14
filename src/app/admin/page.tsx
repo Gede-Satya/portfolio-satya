@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -17,30 +17,31 @@ import {
   Plus,
   Trash2,
   Edit3,
-  CheckCircle2,
   X,
-  Search,
   RefreshCw,
   Save,
-  AlertCircle,
   Eye,
-  Check,
   Download,
   RotateCcw,
   BookOpen,
   Quote,
   Star,
+  EyeOff,
+  Link2,
+  Cpu,
+  Layers,
+  AlertCircle,
+  CheckCircle2,
+  Activity,
 } from "lucide-react";
 import {
   PortfolioContent,
   ContactMessage,
-  getDefaultContent,
-  AboutContent,
-  HeroStats,
 } from "@/lib/storage";
 import { ProjectItem, SkillItem, TimelineItem, TestimonialItem } from "@/types/portfolio";
 import { Toast } from "@/components/Toast";
 import { ImageUpload } from "@/components/ImageUpload";
+import { ProjectModal } from "@/components/ProjectModal";
 
 type AdminTab =
   | "overview"
@@ -65,6 +66,7 @@ export default function AdminDashboardPage() {
   // Modals state
   const [projectModalOpen, setProjectModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
+  const [previewProject, setPreviewProject] = useState<ProjectItem | null>(null);
 
   const [skillModalOpen, setSkillModalOpen] = useState(false);
   const [editingSkill, setEditingSkill] = useState<{
@@ -98,17 +100,7 @@ export default function AdminDashboardPage() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Auth guard and initial data load
-  useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    if (!token) {
-      router.push("/admin/login");
-      return;
-    }
-    loadData(true);
-  }, [router]);
-
-  const loadData = async (showLoadingSpinner = false) => {
+  const loadData = useCallback(async (showLoadingSpinner = false) => {
     if (showLoadingSpinner) setLoading(true);
     try {
       const [resContent, resMessages] = await Promise.all([
@@ -121,12 +113,46 @@ export default function AdminDashboardPage() {
 
       if (dataContent.success) setContent(dataContent.data);
       if (dataMessages.success) setMessages(dataMessages.data);
-    } catch (err) {
+    } catch {
       showToast("Gagal memuat data dari server");
     } finally {
       if (showLoadingSpinner) setLoading(false);
     }
-  };
+  }, []);
+
+  // Auth guard and initial data load
+  useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    if (!token) {
+      router.push("/admin/login");
+      return;
+    }
+    let isMounted = true;
+    (async () => {
+      try {
+        const [resContent, resMessages] = await Promise.all([
+          fetch(`/api/portfolio?_t=${Date.now()}`, { cache: "no-store" }),
+          fetch(`/api/contact?_t=${Date.now()}`, { cache: "no-store" }),
+        ]);
+
+        const dataContent = await resContent.json();
+        const dataMessages = await resMessages.json();
+
+        if (isMounted) {
+          if (dataContent.success) setContent(dataContent.data);
+          if (dataMessages.success) setMessages(dataMessages.data);
+        }
+      } catch {
+        if (isMounted) showToast("Gagal memuat data dari server");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    })();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
@@ -244,6 +270,178 @@ export default function AdminDashboardPage() {
       confirmLabel: "Hapus Proyek",
       onConfirm: () => executeDeleteProject(id),
     });
+  };
+
+  // Toggle visibility handlers
+  const handleToggleProjectVisibility = async (id: string, currentVisible: boolean) => {
+    if (!content) return;
+    const newVisible = !currentVisible;
+    const project = content.projects.find((p) => p.id === id);
+    if (!project) return;
+
+    const updated = { ...project, visible: newVisible };
+    setContent({
+      ...content,
+      projects: content.projects.map((p) => (p.id === id ? updated : p)),
+    });
+
+    try {
+      const res = await fetch("/api/projects", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          `Proyek "${project.title}" ${newVisible ? "sekarang tampil di publik" : "disembunyikan dari publik"}`
+        );
+      } else {
+        loadData(false);
+        showToast(data.message || "Gagal mengubah visibilitas proyek");
+      }
+    } catch (err) {
+      loadData(false);
+      showToast("Gagal mengubah visibilitas proyek");
+    }
+  };
+
+  const handleToggleSkillVisibility = async (name: string, currentVisible: boolean) => {
+    if (!content) return;
+    const newVisible = !currentVisible;
+    const skill = content.skills.find((s) => s.name === name);
+    if (!skill) return;
+
+    const updated = { ...skill, visible: newVisible };
+    setContent({
+      ...content,
+      skills: content.skills.map((s) => (s.name === name ? updated : s)),
+    });
+
+    try {
+      const res = await fetch("/api/skills", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...updated, originalName: name }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          `Keahlian "${skill.name}" ${newVisible ? "sekarang tampil di publik" : "disembunyikan dari publik"}`
+        );
+      } else {
+        loadData(false);
+        showToast(data.message || "Gagal mengubah visibilitas keahlian");
+      }
+    } catch (err) {
+      loadData(false);
+      showToast("Gagal mengubah visibilitas keahlian");
+    }
+  };
+
+  const handleToggleTimelineVisibility = async (id: string, currentVisible: boolean) => {
+    if (!content) return;
+    const newVisible = !currentVisible;
+    const item = content.timeline.find((t) => t.id === id);
+    if (!item) return;
+
+    const updated = { ...item, visible: newVisible };
+    setContent({
+      ...content,
+      timeline: content.timeline.map((t) => (t.id === id ? updated : t)),
+    });
+
+    try {
+      const res = await fetch("/api/timeline", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          `Riwayat "${item.role.id}" ${newVisible ? "sekarang tampil di publik" : "disembunyikan dari publik"}`
+        );
+      } else {
+        loadData(false);
+        showToast(data.message || "Gagal mengubah visibilitas riwayat");
+      }
+    } catch (err) {
+      loadData(false);
+      showToast("Gagal mengubah visibilitas riwayat");
+    }
+  };
+
+  const handleToggleTestimonialVisibility = async (id: string, currentVisible: boolean) => {
+    if (!content) return;
+    const newVisible = !currentVisible;
+    const item = (content.testimonials || []).find((t) => t.id === id);
+    if (!item) return;
+
+    const updated = { ...item, visible: newVisible };
+    setContent({
+      ...content,
+      testimonials: (content.testimonials || []).map((t) => (t.id === id ? updated : t)),
+    });
+
+    try {
+      const res = await fetch("/api/testimonials", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updated),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          `Rekomendasi dari "${item.author}" ${newVisible ? "sekarang tampil di publik" : "disembunyikan dari publik"}`
+        );
+      } else {
+        loadData(false);
+        showToast(data.message || "Gagal mengubah visibilitas rekomendasi");
+      }
+    } catch (err) {
+      loadData(false);
+      showToast("Gagal mengubah visibilitas rekomendasi");
+    }
+  };
+
+  const handleTogglePillarVisibility = async (pIdx: number, currentVisible: boolean) => {
+    if (!content) return;
+    const newVisible = !currentVisible;
+    const currentPillars = [...(content.about?.pillars || [])];
+    if (!currentPillars[pIdx]) return;
+
+    currentPillars[pIdx] = {
+      ...currentPillars[pIdx],
+      visible: newVisible,
+    };
+
+    const updatedAbout = {
+      ...content.about,
+      pillars: currentPillars,
+    };
+
+    setContent({
+      ...content,
+      about: updatedAbout,
+    });
+
+    try {
+      const res = await fetch("/api/portfolio", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ about: updatedAbout }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(
+          `Pilar "${currentPillars[pIdx].title.id}" ${newVisible ? "sekarang tampil di publik" : "disembunyikan dari publik"}`
+        );
+      }
+    } catch (err) {
+      loadData(false);
+      showToast("Gagal memperbarui visibilitas pilar");
+    }
   };
 
   // Skills actions
@@ -783,7 +981,7 @@ export default function AdminDashboardPage() {
                     {content.projects.length}
                   </span>
                   <span className="text-[10px] text-indigo-400 font-mono mt-1 block">
-                    Live di halaman portofolio
+                    {content.projects.filter((p) => p.visible !== false).length} publik • {content.projects.filter((p) => p.visible === false).length} draft
                   </span>
                 </div>
 
@@ -793,7 +991,7 @@ export default function AdminDashboardPage() {
                     {content.skills.length}
                   </span>
                   <span className="text-[10px] text-emerald-400 font-mono mt-1 block">
-                    Frontend, Backend &amp; Cloud
+                    {content.skills.filter((s) => s.visible !== false).length} publik • {content.skills.filter((s) => s.visible === false).length} draft
                   </span>
                 </div>
 
@@ -803,7 +1001,7 @@ export default function AdminDashboardPage() {
                     {content.timeline.length}
                   </span>
                   <span className="text-[10px] text-amber-400 font-mono mt-1 block">
-                    Timeline karir &amp; edukasi
+                    {content.timeline.filter((t) => t.visible !== false).length} publik • {content.timeline.filter((t) => t.visible === false).length} draft
                   </span>
                 </div>
 
@@ -813,7 +1011,7 @@ export default function AdminDashboardPage() {
                     {content.testimonials?.length || 0}
                   </span>
                   <span className="text-[10px] text-yellow-400 font-mono mt-1 block">
-                    Ulasan &amp; endorsement
+                    {(content.testimonials || []).filter((t) => t.visible !== false).length} publik • {(content.testimonials || []).filter((t) => t.visible === false).length} draft
                   </span>
                 </div>
 
@@ -1094,26 +1292,32 @@ export default function AdminDashboardPage() {
                     <input
                       type="text"
                       value={content.profile.headline.id}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setContent({
                           ...content,
                           profile: {
                             ...content.profile,
                             headline: {
-                              ...content.profile.headline,
-                              id: e.target.value,
+                              id: val,
+                              en: val,
                             },
                           },
-                        })
-                      }
+                        });
+                      }}
                       className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                      Main Headline (English)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-zinc-300">
+                        Main Headline (English)
+                      </label>
+                      <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                        <Link2 className="w-3 h-3" /> Mengikuti ID
+                      </span>
+                    </div>
                     <input
                       type="text"
                       value={content.profile.headline.en}
@@ -1140,26 +1344,32 @@ export default function AdminDashboardPage() {
                     <textarea
                       rows={2}
                       value={content.profile.subheadline.id}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const val = e.target.value;
                         setContent({
                           ...content,
                           profile: {
                             ...content.profile,
                             subheadline: {
-                              ...content.profile.subheadline,
-                              id: e.target.value,
+                              id: val,
+                              en: val,
                             },
                           },
-                        })
-                      }
+                        });
+                      }}
                       className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                      Sub-headline (English)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-zinc-300">
+                        Sub-headline (English)
+                      </label>
+                      <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                        <Link2 className="w-3 h-3" /> Mengikuti ID
+                      </span>
+                    </div>
                     <textarea
                       rows={2}
                       value={content.profile.subheadline.en}
@@ -1224,27 +1434,33 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.about?.kicker?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
                               ...content.about,
                               kicker: {
-                                ...content.about?.kicker,
-                                id: e.target.value,
+                                id: val,
+                                en: val,
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         placeholder="Profil & Pendekatan Teknis"
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Kicker / Category Badge (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Kicker / Category Badge (English)
+                        </label>
+                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> Mengikuti ID
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={content.about?.kicker?.en || ""}
@@ -1274,26 +1490,32 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.about?.title?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
                               ...content.about,
                               title: {
-                                ...content.about?.title,
-                                id: e.target.value,
+                                id: val,
+                                en: val,
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Section Main Title (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Section Main Title (English)
+                        </label>
+                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> Mengikuti ID
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={content.about?.title?.en || ""}
@@ -1322,26 +1544,32 @@ export default function AdminDashboardPage() {
                       <textarea
                         rows={2}
                         value={content.about?.subtitle?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
                               ...content.about,
                               subtitle: {
-                                ...content.about?.subtitle,
-                                id: e.target.value,
+                                id: val,
+                                en: val,
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Section Subtitle (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Section Subtitle (English)
+                        </label>
+                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> Mengikuti ID
+                        </span>
+                      </div>
                       <textarea
                         rows={2}
                         value={content.about?.subtitle?.en || ""}
@@ -1377,26 +1605,32 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.about?.bioHeading?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
                               ...content.about,
                               bioHeading: {
-                                ...content.about?.bioHeading,
-                                id: e.target.value,
+                                id: val,
+                                en: val,
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Bio Card Heading (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Bio Card Heading (English)
+                        </label>
+                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> Mengikuti ID
+                        </span>
+                      </div>
                       <input
                         type="text"
                         value={content.about?.bioHeading?.en || ""}
@@ -1425,26 +1659,32 @@ export default function AdminDashboardPage() {
                       <textarea
                         rows={3}
                         value={content.about?.bioP1?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
                               ...content.about,
                               bioP1: {
-                                ...content.about?.bioP1,
-                                id: e.target.value,
+                                id: val,
+                                en: val,
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Paragraph 1 – Background &amp; Core Mastery (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Paragraph 1 – Background &amp; Core Mastery (English)
+                        </label>
+                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> Mengikuti ID
+                        </span>
+                      </div>
                       <textarea
                         rows={3}
                         value={content.about?.bioP1?.en || ""}
@@ -1471,26 +1711,32 @@ export default function AdminDashboardPage() {
                       <textarea
                         rows={3}
                         value={content.about?.bioP2?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
                               ...content.about,
                               bioP2: {
-                                ...content.about?.bioP2,
-                                id: e.target.value,
+                                id: val,
+                                en: val,
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Paragraph 2 – Philosophy &amp; Quality Value (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Paragraph 2 – Philosophy &amp; Quality Value (English)
+                        </label>
+                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                          <Link2 className="w-3 h-3" /> Mengikuti ID
+                        </span>
+                      </div>
                       <textarea
                         rows={3}
                         value={content.about?.bioP2?.en || ""}
@@ -1526,7 +1772,8 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.about?.specs?.location?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
@@ -1534,13 +1781,13 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 location: {
-                                  ...content.about?.specs?.location,
-                                  id: e.target.value,
+                                  id: val,
+                                  en: val,
                                 },
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         placeholder="Bali / Jakarta, Indonesia (WITA / WIB)"
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
@@ -1580,7 +1827,8 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.about?.specs?.education?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
@@ -1588,13 +1836,13 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 education: {
-                                  ...content.about?.specs?.education,
-                                  id: e.target.value,
+                                  id: val,
+                                  en: val,
                                 },
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
@@ -1632,7 +1880,8 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.about?.specs?.focus?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
@@ -1640,13 +1889,13 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 focus: {
-                                  ...content.about?.specs?.focus,
-                                  id: e.target.value,
+                                  id: val,
+                                  en: val,
                                 },
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
@@ -1684,7 +1933,8 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.about?.specs?.availability?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             about: {
@@ -1692,13 +1942,13 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 availability: {
-                                  ...content.about?.specs?.availability,
-                                  id: e.target.value,
+                                  id: val,
+                                  en: val,
                                 },
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
@@ -1741,12 +1991,45 @@ export default function AdminDashboardPage() {
                     {(content.about?.pillars || []).map((pillar, pIdx) => (
                       <div
                         key={pillar.id || pIdx}
-                        className="p-5 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-4"
+                        className={`p-5 rounded-xl border space-y-4 transition-all ${
+                          pillar.visible !== false
+                            ? "bg-zinc-900/60 border-zinc-800"
+                            : "bg-zinc-950/70 border-dashed border-zinc-800/80 opacity-80"
+                        }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold font-mono text-indigo-400">
-                            Pilar #{pIdx + 1} ({pillar.id})
-                          </span>
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold font-mono text-indigo-400">
+                              Pilar #{pIdx + 1} ({pillar.id})
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleTogglePillarVisibility(pIdx, pillar.visible !== false)}
+                              disabled={saving}
+                              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
+                                pillar.visible !== false
+                                  ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                                  : "bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+                              }`}
+                              title={
+                                pillar.visible !== false
+                                  ? "Pilar ini tampil di publik. Klik untuk sembunyikan."
+                                  : "Pilar ini disembunyikan. Klik untuk tampilkan di publik."
+                              }
+                            >
+                              {pillar.visible !== false ? (
+                                <>
+                                  <Eye className="w-3 h-3 text-emerald-400" />
+                                  <span>Publik</span>
+                                </>
+                              ) : (
+                                <>
+                                  <EyeOff className="w-3 h-3 text-zinc-400" />
+                                  <span>Draft</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
                           <div className="flex items-center gap-2">
                             <label className="text-[11px] text-zinc-400 font-medium">
                               Ikon:
@@ -1757,7 +2040,7 @@ export default function AdminDashboardPage() {
                                 const newPillars = [...(content.about?.pillars || [])];
                                 newPillars[pIdx] = {
                                   ...newPillars[pIdx],
-                                  icon: e.target.value as any,
+                                  icon: e.target.value as "layout" | "server" | "cloud" | "cpu",
                                 };
                                 setContent({
                                   ...content,
@@ -1786,12 +2069,13 @@ export default function AdminDashboardPage() {
                               type="text"
                               value={pillar.title.id}
                               onChange={(e) => {
+                                const val = e.target.value;
                                 const newPillars = [...(content.about?.pillars || [])];
                                 newPillars[pIdx] = {
                                   ...newPillars[pIdx],
                                   title: {
-                                    ...newPillars[pIdx].title,
-                                    id: e.target.value,
+                                    id: val,
+                                    en: val,
                                   },
                                 };
                                 setContent({
@@ -1844,12 +2128,13 @@ export default function AdminDashboardPage() {
                               rows={3}
                               value={pillar.desc.id}
                               onChange={(e) => {
+                                const val = e.target.value;
                                 const newPillars = [...(content.about?.pillars || [])];
                                 newPillars[pIdx] = {
                                   ...newPillars[pIdx],
                                   desc: {
-                                    ...newPillars[pIdx].desc,
-                                    id: e.target.value,
+                                    id: val,
+                                    en: val,
                                   },
                                 };
                                 setContent({
@@ -1930,7 +2215,8 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.heroStats?.years?.lbl?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             heroStats: {
@@ -1938,13 +2224,13 @@ export default function AdminDashboardPage() {
                               years: {
                                 ...content.heroStats?.years,
                                 lbl: {
-                                  ...content.heroStats?.years?.lbl,
-                                  id: e.target.value,
+                                  id: val,
+                                  en: val,
                                 },
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         placeholder="Thn Pengalaman (ID)"
                         className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
                       />
@@ -1997,7 +2283,8 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.heroStats?.projects?.lbl?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             heroStats: {
@@ -2005,13 +2292,13 @@ export default function AdminDashboardPage() {
                               projects: {
                                 ...content.heroStats?.projects,
                                 lbl: {
-                                  ...content.heroStats?.projects?.lbl,
-                                  id: e.target.value,
+                                  id: val,
+                                  en: val,
                                 },
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         placeholder="Proyek Selesai (ID)"
                         className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
                       />
@@ -2064,7 +2351,8 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={content.heroStats?.uptime?.lbl?.id || ""}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val = e.target.value;
                           setContent({
                             ...content,
                             heroStats: {
@@ -2072,13 +2360,13 @@ export default function AdminDashboardPage() {
                               uptime: {
                                 ...content.heroStats?.uptime,
                                 lbl: {
-                                  ...content.heroStats?.uptime?.lbl,
-                                  id: e.target.value,
+                                  id: val,
+                                  en: val,
                                 },
                               },
                             },
-                          })
-                        }
+                          });
+                        }}
                         placeholder="Fokus Uptime (ID)"
                         className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
                       />
@@ -2130,7 +2418,7 @@ export default function AdminDashboardPage() {
                 <div>
                   <h2 className="text-2xl font-bold text-white">Kelola Proyek</h2>
                   <p className="text-xs text-zinc-400 mt-1">
-                    Tambah, edit, atau hapus proyek portofolio yang ditampilkan ke publik.
+                    Kelola portofolio, visibilitas publik, dan studi kasus arsitektur teknis sistem.
                   </p>
                 </div>
                 <button
@@ -2145,10 +2433,28 @@ export default function AdminDashboardPage() {
                 </button>
               </div>
 
+              {/* Architecture Stats Banner */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-zinc-900 to-indigo-500/5 border border-emerald-500/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <Cpu className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span className="text-zinc-300">
+                    Studi Kasus Arsitektur:{" "}
+                    <strong className="text-white">
+                      {content.projects.filter((p) => Boolean(p.details?.architecture?.id)).length} dari {content.projects.length}
+                    </strong>{" "}
+                    proyek telah dilengkapi arsitektur sistem.
+                  </span>
+                </div>
+                <span className="text-[11px] text-zinc-400 font-mono flex items-center gap-1">
+                  Klik ikon <Layers className="w-3.5 h-3.5 inline text-emerald-400" /> untuk pratinjau langsung modal arsitektur
+                </span>
+              </div>
+
               {/* Projects List */}
               <div className="space-y-4">
                 {content.projects.map((project: ProjectItem) => {
                   const isDeleting = deletingId === `proj-${project.id}`;
+                  const hasArchitecture = Boolean(project.details?.architecture?.id);
                   return (
                     <div
                       key={project.id}
@@ -2168,13 +2474,24 @@ export default function AdminDashboardPage() {
                           />
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-indigo-400 font-semibold">
                               {project.category}
                             </span>
                             <span className="text-[10px] text-zinc-500 font-mono">
                               {project.badge}
                             </span>
+                            {hasArchitecture ? (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold flex items-center gap-1">
+                                <Cpu className="w-3 h-3" />
+                                <span>Arsitektur Siap</span>
+                              </span>
+                            ) : (
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />
+                                <span>Arsitektur Kosong</span>
+                              </span>
+                            )}
                           </div>
                           <h4 className="font-bold text-sm text-white mt-1">
                             {project.title}
@@ -2187,6 +2504,42 @@ export default function AdminDashboardPage() {
 
                       <div className="flex items-center gap-2 self-end sm:self-center">
                         <button
+                          type="button"
+                          onClick={() => setPreviewProject(project)}
+                          disabled={isDeleting}
+                          className="p-2 rounded-lg bg-zinc-800 hover:bg-emerald-500/20 hover:text-emerald-400 text-zinc-300 transition-colors disabled:opacity-50"
+                          title="Pratinjau Studi Kasus & Arsitektur Sistem"
+                        >
+                          <Layers className="w-4 h-4 text-emerald-400" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleProjectVisibility(project.id, project.visible !== false)}
+                          disabled={isDeleting}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                            project.visible !== false
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                              : "bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+                          }`}
+                          title={
+                            project.visible !== false
+                              ? "Card ini aktif di publik. Klik untuk sembunyikan."
+                              : "Card ini disembunyikan. Klik untuk tampilkan di publik."
+                          }
+                        >
+                          {project.visible !== false ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Publik</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5 text-zinc-400" />
+                              <span>Draft</span>
+                            </>
+                          )}
+                        </button>
+                        <button
                           onClick={() => {
                             setEditingProject(project);
                             setProjectModalOpen(true);
@@ -2198,7 +2551,7 @@ export default function AdminDashboardPage() {
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDeleteProject(project.id)}
+                          onClick={() => handleDeleteProject(project.id, project.title)}
                           disabled={isDeleting}
                           className="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 transition-colors disabled:opacity-50"
                           title="Hapus Proyek"
@@ -2272,6 +2625,33 @@ export default function AdminDashboardPage() {
                       </div>
 
                       <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSkillVisibility(skill.name, skill.visible !== false)}
+                          disabled={isDeleting}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
+                            skill.visible !== false
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                              : "bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+                          }`}
+                          title={
+                            skill.visible !== false
+                              ? "Tampil di publik. Klik untuk sembunyikan."
+                              : "Disembunyikan. Klik untuk tampilkan."
+                          }
+                        >
+                          {skill.visible !== false ? (
+                            <>
+                              <Eye className="w-3 h-3 text-emerald-400" />
+                              <span>Publik</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3 h-3 text-zinc-400" />
+                              <span>Draft</span>
+                            </>
+                          )}
+                        </button>
                         <button
                           onClick={() => {
                             setEditingSkill({
@@ -2363,6 +2743,33 @@ export default function AdminDashboardPage() {
 
                       <div className="flex items-center gap-2">
                         <button
+                          type="button"
+                          onClick={() => handleToggleTimelineVisibility(item.id, item.visible !== false)}
+                          disabled={isDeleting}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                            item.visible !== false
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                              : "bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+                          }`}
+                          title={
+                            item.visible !== false
+                              ? "Tampil di publik. Klik untuk sembunyikan."
+                              : "Disembunyikan. Klik untuk tampilkan."
+                          }
+                        >
+                          {item.visible !== false ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5 text-emerald-400" />
+                              <span>Publik</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5 text-zinc-400" />
+                              <span>Draft</span>
+                            </>
+                          )}
+                        </button>
+                        <button
                           onClick={() => {
                             setEditingTimeline(item);
                             setTimelineModalOpen(true);
@@ -2440,6 +2847,33 @@ export default function AdminDashboardPage() {
                               ))}
                             </div>
                             <div className="flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleTestimonialVisibility(item.id || itemId, item.visible !== false)}
+                                disabled={isDeleting}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all ${
+                                  item.visible !== false
+                                    ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20"
+                                    : "bg-zinc-800 text-zinc-400 border-zinc-700 hover:bg-zinc-700 hover:text-zinc-200"
+                                }`}
+                                title={
+                                  item.visible !== false
+                                    ? "Tampil di publik. Klik untuk sembunyikan."
+                                    : "Disembunyikan. Klik untuk tampilkan."
+                                }
+                              >
+                                {item.visible !== false ? (
+                                  <>
+                                    <Eye className="w-3 h-3 text-emerald-400" />
+                                    <span>Publik</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <EyeOff className="w-3 h-3 text-zinc-400" />
+                                    <span>Draft</span>
+                                  </>
+                                )}
+                              </button>
                               <button
                                 onClick={() => {
                                   setEditingTestimonial(item);
@@ -2706,6 +3140,15 @@ export default function AdminDashboardPage() {
         />
       )}
 
+      {/* PREVIEW ARSITEKTUR & STUDI KASUS MODAL */}
+      {previewProject && (
+        <ProjectModal
+          project={previewProject}
+          onClose={() => setPreviewProject(null)}
+          lang="id"
+        />
+      )}
+
       {/* SKILL MODAL (Add / Edit) */}
       {skillModalOpen && (
         <SkillFormModal
@@ -2800,31 +3243,92 @@ function ProjectFormModal({
   onClose: () => void;
   onSave: (p: ProjectItem) => void;
 }) {
-  const [formData, setFormData] = useState<ProjectItem>(
-    initialProject || {
-      id: "proj-" + Date.now(),
-      title: "",
-      category: "fullstack",
-      badge: "Featured Full-Stack",
-      image: "/assets/img/project-saas.jpg",
-      tags: ["Next.js", "TypeScript", "Tailwind CSS"],
-      summary: { id: "", en: "" },
-      metrics: [
-        { val: "< 100ms", lbl: { id: "Latensi", en: "Latency" } },
-        { val: "99.9%", lbl: { id: "Uptime", en: "Uptime" } },
-      ],
-      githubUrl: "https://github.com",
-      liveUrl: "https://demo.example.com",
-      details: {
-        overview: { id: "", en: "" },
-        architecture: { id: "", en: "" },
-        highlights: { id: ["Fitur A", "Fitur B"], en: ["Feature A", "Feature B"] },
-        challengesSolved: { id: "", en: "" },
-      },
-    }
+  const [formData, setFormData] = useState<ProjectItem>(() =>
+    initialProject
+      ? {
+          ...initialProject,
+          visible: initialProject.visible !== false,
+          details: {
+            overview: initialProject.details?.overview || { id: "", en: "" },
+            architecture: initialProject.details?.architecture || { id: "", en: "" },
+            highlights: initialProject.details?.highlights || { id: [], en: [] },
+            challengesSolved: initialProject.details?.challengesSolved || { id: "", en: "" },
+          },
+          metrics: initialProject.metrics || [
+            { val: "< 85ms", lbl: { id: "Latensi API", en: "API Latency" } },
+            { val: "99.98%", lbl: { id: "Keandalan Uptime", en: "Uptime SLA" } },
+          ],
+        }
+      : {
+          id: "proj-" + Date.now(),
+          title: "",
+          category: "fullstack",
+          badge: "Featured Full-Stack",
+          image: "/assets/img/project-saas.jpg",
+          tags: ["Next.js 14", "TypeScript", "Tailwind CSS", "Node.js", "PostgreSQL"],
+          summary: { id: "", en: "" },
+          visible: true,
+          metrics: [
+            { val: "< 85ms", lbl: { id: "Latensi API", en: "API Latency" } },
+            { val: "99.98%", lbl: { id: "Keandalan Uptime", en: "Uptime SLA" } },
+            { val: "99/100", lbl: { id: "Skor Lighthouse", en: "Lighthouse" } },
+          ],
+          githubUrl: "https://github.com",
+          liveUrl: "https://demo.example.com",
+          details: {
+            overview: { id: "", en: "" },
+            architecture: { id: "", en: "" },
+            highlights: { id: [], en: [] },
+            challengesSolved: { id: "", en: "" },
+          },
+        }
   );
 
-  const [tagInput, setTagInput] = useState(formData.tags.join(", "));
+  const [tagInput, setTagInput] = useState(() => formData.tags?.join(", ") || "");
+  const [highlightsInputId, setHighlightsInputId] = useState(
+    () => formData.details?.highlights?.id?.join("\n") || ""
+  );
+  const [highlightsInputEn, setHighlightsInputEn] = useState(
+    () => formData.details?.highlights?.en?.join("\n") || ""
+  );
+  const [autoSyncEn, setAutoSyncEn] = useState(true);
+  const [modalTab, setModalTab] = useState<"general" | "architecture">("general");
+  const [showInnerPreview, setShowInnerPreview] = useState(false);
+
+  const updateMetricVal = (index: number, val: string) => {
+    const updated = [...(formData.metrics || [])];
+    if (updated[index]) {
+      updated[index] = { ...updated[index], val };
+      setFormData({ ...formData, metrics: updated });
+    }
+  };
+
+  const updateMetricLbl = (index: number, lang: "id" | "en", text: string) => {
+    const updated = [...(formData.metrics || [])];
+    if (updated[index]) {
+      updated[index] = {
+        ...updated[index],
+        lbl: {
+          id: lang === "id" ? text : updated[index].lbl.id,
+          en: lang === "en" ? text : (autoSyncEn ? text : updated[index].lbl.en),
+        },
+      };
+      setFormData({ ...formData, metrics: updated });
+    }
+  };
+
+  const addMetric = () => {
+    const updated = [...(formData.metrics || [])];
+    if (updated.length < 4) {
+      updated.push({ val: "100%", lbl: { id: "Metrik Baru", en: "New Metric" } });
+      setFormData({ ...formData, metrics: updated });
+    }
+  };
+
+  const removeMetric = (index: number) => {
+    const updated = (formData.metrics || []).filter((_, i) => i !== index);
+    setFormData({ ...formData, metrics: updated });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2832,177 +3336,715 @@ function ProjectFormModal({
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    onSave({ ...formData, tags: tagsArray });
+    const highlightsId = highlightsInputId
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const highlightsEn = highlightsInputEn
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    onSave({
+      ...formData,
+      tags: tagsArray,
+      details: {
+        ...formData.details,
+        highlights: {
+          id: highlightsId,
+          en: highlightsEn.length ? highlightsEn : highlightsId,
+        },
+      },
+    });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-[#121217] border border-zinc-800 p-6 sm:p-8 text-zinc-100 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in">
+      <div className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-[#121217] border border-zinc-800 p-5 sm:p-8 text-zinc-100 shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-zinc-800 hover:bg-zinc-700 text-zinc-400"
+          className="absolute top-5 right-5 p-2 rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <h3 className="text-xl font-bold text-white mb-6">
-          {initialProject ? "Edit Proyek Portofolio" : "Tambah Proyek Baru"}
-        </h3>
+        <div className="mb-6">
+          <h3 className="text-xl font-bold text-white">
+            {initialProject ? "Edit Proyek Portofolio" : "Tambah Proyek Baru"}
+          </h3>
+          <p className="text-xs text-zinc-400 mt-1">
+            Lengkapi data proyek publik beserta studi kasus arsitektur teknis sistem.
+          </p>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold text-zinc-300 mb-1">
-                Judul Proyek *
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="mis. Nexa SaaS"
-                className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-zinc-300 mb-1">
-                Kategori
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    category: e.target.value as "fullstack" | "frontend" | "backend",
-                  })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-              >
-                <option value="fullstack">Full-Stack</option>
-                <option value="frontend">Frontend</option>
-                <option value="backend">Backend &amp; Systems</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Badge Tag
-            </label>
-            <input
-              type="text"
-              value={formData.badge}
-              onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
-              placeholder="mis. Featured Full-Stack"
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <ImageUpload
-              label="Gambar Mockup / Banner Proyek"
-              aspect="landscape"
-              value={formData.image}
-              onChange={(url) => setFormData({ ...formData, image: url })}
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Tech Tags (pisahkan dengan koma)
-            </label>
-            <input
-              type="text"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              placeholder="Next.js 14, TypeScript, PostgreSQL, Docker"
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Ringkasan Proyek (Bahasa Indonesia) *
-            </label>
-            <textarea
-              rows={2}
-              required
-              value={formData.summary.id}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  summary: { ...formData.summary, id: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Project Summary (English) *
-            </label>
-            <textarea
-              rows={2}
-              required
-              value={formData.summary.en}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  summary: { ...formData.summary, en: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block font-semibold text-zinc-300 mb-1">
-                Tautan GitHub
-              </label>
-              <input
-                type="text"
-                value={formData.githubUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, githubUrl: e.target.value })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-zinc-300 mb-1">
-                Tautan Live Demo (Opsional)
-              </label>
-              <input
-                type="text"
-                value={formData.liveUrl || ""}
-                onChange={(e) =>
-                  setFormData({ ...formData, liveUrl: e.target.value })
-                }
-                className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
-              />
-            </div>
-          </div>
-
-          <div className="pt-4 flex justify-end gap-3">
+        {/* Modal Tab Switcher */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-6 border-b border-zinc-800 pb-3">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300"
+              onClick={() => setModalTab("general")}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                modalTab === "general"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                  : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-800"
+              }`}
             >
-              Batal
+              <FolderKanban className="w-3.5 h-3.5" />
+              <span>Informasi Umum</span>
             </button>
             <button
-              type="submit"
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
+              type="button"
+              onClick={() => setModalTab("architecture")}
+              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                modalTab === "architecture"
+                  ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                  : "bg-zinc-900 text-zinc-400 hover:text-white border border-zinc-800 hover:bg-zinc-800"
+              }`}
             >
-              Simpan Proyek
+              <Cpu className="w-3.5 h-3.5" />
+              <span>Detail Arsitektur &amp; Studi Kasus</span>
+              {formData.details?.architecture?.id && (
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              )}
             </button>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setAutoSyncEn(!autoSyncEn)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              autoSyncEn
+                ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+            }`}
+            title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+          >
+            <Link2 className="w-3 h-3" />
+            <span>{autoSyncEn ? "Auto-sync EN Aktif" : "Auto-sync EN Mati"}</span>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5 text-xs">
+          {/* TAB 1: INFORMASI UMUM */}
+          {modalTab === "general" && (
+            <div className="space-y-4 animate-in fade-in">
+              {/* Status Visibilitas Publik */}
+              <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`p-2 rounded-xl ${
+                      formData.visible !== false
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : "bg-zinc-800 text-zinc-400"
+                    }`}
+                  >
+                    {formData.visible !== false ? (
+                      <Eye className="w-4 h-4" />
+                    ) : (
+                      <EyeOff className="w-4 h-4" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white text-xs">Visibilitas Publik</p>
+                    <p className="text-[11px] text-zinc-400">
+                      {formData.visible !== false
+                        ? "Tampil di halaman beranda / portofolio publik."
+                        : "Disembunyikan dari publik (hanya terlihat di admin sebagai draft)."}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      visible: prev.visible === false,
+                    }))
+                  }
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                    formData.visible !== false ? "bg-emerald-500" : "bg-zinc-700"
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      formData.visible !== false ? "translate-x-6" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Judul Proyek *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="mis. Nexa SaaS"
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Kategori
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        category: e.target.value as "fullstack" | "frontend" | "backend",
+                      })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                  >
+                    <option value="fullstack">Full-Stack</option>
+                    <option value="frontend">Frontend</option>
+                    <option value="backend">Backend &amp; Systems</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-zinc-300 mb-1">
+                  Badge Tag
+                </label>
+                <input
+                  type="text"
+                  value={formData.badge}
+                  onChange={(e) => setFormData({ ...formData, badge: e.target.value })}
+                  placeholder="mis. Featured Full-Stack"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <ImageUpload
+                  label="Gambar Mockup / Banner Proyek"
+                  aspect="landscape"
+                  value={formData.image}
+                  onChange={(url) => setFormData({ ...formData, image: url })}
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-zinc-300 mb-1">
+                  Tech Tags (pisahkan dengan koma)
+                </label>
+                <input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  placeholder="Next.js 14, TypeScript, PostgreSQL, Docker, Redis"
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-zinc-300 mb-1">
+                  Ringkasan Proyek Singkat (Bahasa Indonesia) *
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={formData.summary.id}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFormData((prev) => ({
+                      ...prev,
+                      summary: {
+                        id: val,
+                        en: autoSyncEn ? val : prev.summary.en,
+                      },
+                    }));
+                  }}
+                  placeholder="Deskripsi singkat yang tampil pada kartu proyek utama..."
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-semibold text-zinc-300 mb-1">
+                  Project Summary (English) *
+                </label>
+                <textarea
+                  rows={2}
+                  required
+                  value={formData.summary.en}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      summary: { ...formData.summary, en: e.target.value },
+                    })
+                  }
+                  placeholder="Short summary displayed on public card..."
+                  className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Tautan GitHub
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.githubUrl}
+                    onChange={(e) =>
+                      setFormData({ ...formData, githubUrl: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Tautan Live Demo (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.liveUrl || ""}
+                    onChange={(e) =>
+                      setFormData({ ...formData, liveUrl: e.target.value })
+                    }
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-indigo-300 text-xs">Lengkapi Kasus Arsitektur?</p>
+                  <p className="text-[11px] text-zinc-400">
+                    Tambahkan penjelasan arsitektur sistem, tantangan rekayasa, dan metrik performa.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalTab("architecture")}
+                  className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all"
+                >
+                  Detail Arsitektur &rarr;
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: DETAIL ARSITEKTUR & STUDI KASUS */}
+          {modalTab === "architecture" && (
+            <div className="space-y-5 animate-in fade-in">
+              {/* Info Banner */}
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-start gap-3">
+                <Cpu className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-bold text-emerald-200">
+                    Studi Kasus Arsitektur Sistem (Architecture Deep-Dive)
+                  </p>
+                  <p className="text-zinc-300 text-[11px] leading-relaxed">
+                    Bagian ini akan ditampilkan dalam modal popup interaktif ketika pengunjung mengklik tombol <strong>&ldquo;Detail Arsitektur&rdquo;</strong> di kartu proyek Anda.
+                  </p>
+                </div>
+              </div>
+
+              {/* 1. Desain Arsitektur Sistem */}
+              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Cpu className="w-4 h-4 text-emerald-400" />
+                    <h4 className="font-bold text-white text-xs">
+                      Desain Arsitektur Sistem (System Architecture) *
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-zinc-500 font-mono">
+                    details.architecture
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400 leading-relaxed">
+                  Jelaskan pola arsitektur kode (mis. Microservices, Server Components, Modular Decoupling, Pipeline Data, Redis Caching, DB Partitioning) yang tampil di pop-up Studi Kasus Arsitektur.
+                </p>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Arsitektur Sistem (Bahasa Indonesia) *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formData.details?.architecture?.id || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        details: {
+                          ...prev.details,
+                          architecture: {
+                            id: val,
+                            en: autoSyncEn ? val : prev.details?.architecture?.en || "",
+                          },
+                        },
+                      }));
+                    }}
+                    placeholder="Frontend dibangun menggunakan Next.js App Router dengan React Server Components. Backend diorkestrasikan melalui microservices Node.js, PostgreSQL dengan connection pooling, dan cluster Redis untuk analitik caching..."
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-emerald-500 leading-relaxed text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    System Architecture (English) *
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={formData.details?.architecture?.en || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        details: {
+                          ...prev.details,
+                          architecture: {
+                            ...prev.details?.architecture,
+                            en: val,
+                          },
+                        },
+                      }));
+                    }}
+                    placeholder="The frontend is powered by Next.js App Router with React Server Components. The backend is orchestrated via Node.js microservices, PostgreSQL with pooling, and Redis cluster..."
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-emerald-500 leading-relaxed text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* 2. Ikhtisar Proyek (Project Overview) */}
+              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-indigo-400" />
+                  <h4 className="font-bold text-white text-xs">
+                    Ikhtisar Mendalam (Project Overview)
+                  </h4>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Ikhtisar Proyek (Bahasa Indonesia)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.details?.overview?.id || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        details: {
+                          ...prev.details,
+                          overview: {
+                            id: val,
+                            en: autoSyncEn ? val : prev.details?.overview?.en || "",
+                          },
+                        },
+                      }));
+                    }}
+                    placeholder="Latar belakang masalah dan tujuan rekayasa proyek..."
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500 leading-relaxed text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Project Overview (English)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.details?.overview?.en || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        details: {
+                          ...prev.details,
+                          overview: {
+                            ...prev.details?.overview,
+                            en: val,
+                          },
+                        },
+                      }));
+                    }}
+                    placeholder="Problem context and architectural engineering objectives..."
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500 leading-relaxed text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* 3. Tantangan Rekayasa & Solusi */}
+              <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 space-y-3">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-400" />
+                  <h4 className="font-bold text-amber-300 text-xs">
+                    Tantangan Rekayasa &amp; Solusi (Engineering Challenge &amp; Solution)
+                  </h4>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Tantangan &amp; Solusi (Bahasa Indonesia)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.details?.challengesSolved?.id || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        details: {
+                          ...prev.details,
+                          challengesSolved: {
+                            id: val,
+                            en: autoSyncEn ? val : prev.details?.challengesSolved?.en || "",
+                          },
+                        },
+                      }));
+                    }}
+                    placeholder="Tantangan utama adalah menangani lonjakan query agregasi di bawah beban tinggi. Solusinya diatasi dengan partisi tabel PostgreSQL dan worker queue Redis..."
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-amber-500 leading-relaxed text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-zinc-300 mb-1">
+                    Challenge &amp; Solution (English)
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.details?.challengesSolved?.en || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData((prev) => ({
+                        ...prev,
+                        details: {
+                          ...prev.details,
+                          challengesSolved: {
+                            ...prev.details?.challengesSolved,
+                            en: val,
+                          },
+                        },
+                      }));
+                    }}
+                    placeholder="The core challenge was scaling aggregate analytics queries under sudden peak loads. Solved using table partitioning and background worker queues..."
+                    className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-amber-500 leading-relaxed text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* 4. Sorotan Fitur & Keamanan */}
+              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-400" />
+                    <h4 className="font-bold text-white text-xs">
+                      Sorotan Fitur &amp; Keamanan (Key Highlights)
+                    </h4>
+                  </div>
+                  <span className="text-[10px] text-zinc-500">1 baris = 1 poin bullet</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block font-semibold text-zinc-300 mb-1">
+                      Poin Sorotan (Bahasa Indonesia)
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={highlightsInputId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setHighlightsInputId(val);
+                        if (autoSyncEn) {
+                          setHighlightsInputEn(val);
+                        }
+                      }}
+                      placeholder={"Autentikasi multi-tenant dengan JWT dan RBAC\nSinkronisasi WebSocket dan Server-Sent Events\nDukungan multi-mata uang dan webhook pembayaran"}
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-cyan-500 font-mono text-[11px] leading-relaxed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-zinc-300 mb-1">
+                      Highlights (English)
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={highlightsInputEn}
+                      onChange={(e) => setHighlightsInputEn(e.target.value)}
+                      placeholder={"Multi-tenant JWT authentication with RBAC\nReal-time WebSocket event pipeline\nMulti-currency recurring billing with webhooks"}
+                      className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-cyan-500 font-mono text-[11px] leading-relaxed"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 5. Metrik Performa & Reliabilitas */}
+              <div className="p-4 rounded-2xl bg-zinc-900/60 border border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-emerald-400" />
+                    <h4 className="font-bold text-white text-xs">
+                      Metrik Performa &amp; Reliabilitas (Metrics Ribbon)
+                    </h4>
+                  </div>
+                  {(formData.metrics?.length || 0) < 4 && (
+                    <button
+                      type="button"
+                      onClick={addMetric}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[11px] font-semibold"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>Tambah Metrik</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2.5">
+                  {(formData.metrics || []).map((m, mIdx) => (
+                    <div
+                      key={mIdx}
+                      className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/80 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5"
+                    >
+                      <div className="w-full sm:w-28 shrink-0">
+                        <label className="block text-[10px] text-zinc-400 font-semibold mb-0.5">
+                          Nilai
+                        </label>
+                        <input
+                          type="text"
+                          value={m.val}
+                          onChange={(e) => updateMetricVal(mIdx, e.target.value)}
+                          placeholder="mis. < 85ms"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-emerald-400 font-bold outline-none"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-zinc-400 font-semibold mb-0.5">
+                          Label (ID)
+                        </label>
+                        <input
+                          type="text"
+                          value={m.lbl.id}
+                          onChange={(e) => updateMetricLbl(mIdx, "id", e.target.value)}
+                          placeholder="mis. Latensi API"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-white outline-none"
+                        />
+                      </div>
+
+                      <div className="flex-1">
+                        <label className="block text-[10px] text-zinc-400 font-semibold mb-0.5">
+                          Label (EN)
+                        </label>
+                        <input
+                          type="text"
+                          value={m.lbl.en}
+                          onChange={(e) => updateMetricLbl(mIdx, "en", e.target.value)}
+                          placeholder="mis. API Latency"
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-white outline-none"
+                        />
+                      </div>
+
+                      {(formData.metrics?.length || 0) > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeMetric(mIdx)}
+                          className="self-end sm:self-center p-2 rounded-lg text-rose-400 hover:bg-rose-500/10 transition-colors mt-auto"
+                          title="Hapus Metrik"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Form Actions */}
+          <div className="pt-4 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-800/80">
+            <div>
+              {modalTab === "architecture" ? (
+                <button
+                  type="button"
+                  onClick={() => setModalTab("general")}
+                  className="px-3.5 py-2 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-400 hover:text-white border border-zinc-800 text-xs font-semibold"
+                >
+                  &larr; Informasi Umum
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setModalTab("architecture")}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-xs font-semibold flex items-center gap-1.5"
+                >
+                  <Cpu className="w-3.5 h-3.5" />
+                  <span>Atur Detail Arsitektur &rarr;</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => setShowInnerPreview(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-zinc-850 hover:bg-emerald-500/15 hover:text-emerald-400 text-zinc-300 border border-zinc-750 text-xs font-semibold transition-colors"
+                title="Pratinjau tampilan modal studi kasus & arsitektur proyek"
+              >
+                <Layers className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Pratinjau Arsitektur</span>
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20"
+              >
+                Simpan Proyek
+              </button>
+            </div>
+          </div>
         </form>
+
+        {/* Live In-Modal Architecture Preview */}
+        {showInnerPreview && (
+          <ProjectModal
+            project={{
+              ...formData,
+              tags: tagInput
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean),
+              details: {
+                ...formData.details,
+                highlights: {
+                  id: highlightsInputId
+                    .split("\n")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                  en: highlightsInputEn
+                    .split("\n")
+                    .map((s) => s.trim())
+                    .filter(Boolean),
+                },
+              },
+            }}
+            onClose={() => setShowInnerPreview(false)}
+            lang="id"
+          />
+        )}
       </div>
     </div>
   );
@@ -3019,17 +4061,22 @@ function SkillFormModal({
   onClose: () => void;
   onSave: (skill: SkillItem, orig?: string) => void;
 }) {
-  const [formData, setFormData] = useState<SkillItem>(
-    initialSkill || {
-      name: "",
-      category: "frontend",
-      level: "Advanced",
-      exp: { id: "3+ Tahun", en: "3+ Years" },
-      desc: { id: "", en: "" },
-      progress: 85,
-      iconText: "JS",
-    }
+  const [formData, setFormData] = useState<SkillItem>(() =>
+    initialSkill
+      ? { ...initialSkill, visible: initialSkill.visible !== false }
+      : {
+          name: "",
+          category: "frontend",
+          level: "Advanced",
+          exp: { id: "3+ Tahun", en: "3+ Years" },
+          desc: { id: "", en: "" },
+          progress: 85,
+          iconText: "JS",
+          visible: true,
+        }
   );
+
+  const [autoSyncEn, setAutoSyncEn] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -3051,6 +4098,51 @@ function SkillFormModal({
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {/* Status Visibilitas Publik */}
+          <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`p-2 rounded-xl ${
+                  formData.visible !== false
+                    ? "bg-emerald-500/10 text-emerald-400"
+                    : "bg-zinc-800 text-zinc-400"
+                }`}
+              >
+                {formData.visible !== false ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-white text-xs">Visibilitas Publik</p>
+                <p className="text-[11px] text-zinc-400">
+                  {formData.visible !== false
+                    ? "Tampil di section keahlian publik."
+                    : "Disembunyikan (draft/arsip)."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  visible: prev.visible === false,
+                }))
+              }
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                formData.visible !== false ? "bg-emerald-500" : "bg-zinc-700"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.visible !== false ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-zinc-300 mb-1">
@@ -3094,7 +4186,7 @@ function SkillFormModal({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    category: e.target.value as any,
+                    category: e.target.value as "frontend" | "backend" | "database" | "tools",
                   })
                 }
                 className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-emerald-500"
@@ -3113,7 +4205,7 @@ function SkillFormModal({
                 onChange={(e) =>
                   setFormData({
                     ...formData,
-                    level: e.target.value as any,
+                    level: e.target.value as "Expert" | "Advanced" | "Intermediate",
                   })
                 }
                 className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-emerald-500"
@@ -3142,18 +4234,37 @@ function SkillFormModal({
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Deskripsi Singkat (Bahasa Indonesia)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-semibold text-zinc-300">
+                Deskripsi Singkat (Bahasa Indonesia)
+              </label>
+              <button
+                type="button"
+                onClick={() => setAutoSyncEn(!autoSyncEn)}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                  autoSyncEn
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                }`}
+                title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+              >
+                <Link2 className="w-2.5 h-2.5" />
+                <span>{autoSyncEn ? "Auto-sync EN aktif" : "Auto-sync EN mati"}</span>
+              </button>
+            </div>
             <input
               type="text"
               value={formData.desc.id}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  desc: { ...formData.desc, id: e.target.value },
-                })
-              }
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  desc: {
+                    id: val,
+                    en: autoSyncEn ? val : prev.desc.en,
+                  },
+                }));
+              }}
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-emerald-500"
             />
           </div>
@@ -3205,22 +4316,26 @@ function TimelineFormModal({
   onClose: () => void;
   onSave: (item: TimelineItem) => void;
 }) {
-  const [formData, setFormData] = useState<TimelineItem>(
-    initialItem || {
-      id: "time-" + Date.now(),
-      period: "2024 — Sekarang",
-      role: { id: "", en: "" },
-      company: "",
-      badge: { id: "Penuh Waktu", en: "Full-Time" },
-      badgeType: "work",
-      description: { id: "", en: "" },
-      skills: ["React", "Node.js"],
-    }
+  const [formData, setFormData] = useState<TimelineItem>(() =>
+    initialItem
+      ? { ...initialItem, visible: initialItem.visible !== false }
+      : {
+          id: "time-" + Date.now(),
+          period: "2024 — Sekarang",
+          role: { id: "", en: "" },
+          company: "",
+          badge: { id: "Penuh Waktu", en: "Full-Time" },
+          badgeType: "work",
+          description: { id: "", en: "" },
+          skills: ["React", "Node.js"],
+          visible: true,
+        }
   );
 
   const [skillsInput, setSkillsInput] = useState(
     formData.skills?.join(", ") || ""
   );
+  const [autoSyncEn, setAutoSyncEn] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -3246,6 +4361,51 @@ function TimelineFormModal({
         </h3>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {/* Status Visibilitas Publik */}
+          <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`p-2 rounded-xl ${
+                  formData.visible !== false
+                    ? "bg-emerald-500/10 text-emerald-400"
+                    : "bg-zinc-800 text-zinc-400"
+                }`}
+              >
+                {formData.visible !== false ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-white text-xs">Visibilitas Publik</p>
+                <p className="text-[11px] text-zinc-400">
+                  {formData.visible !== false
+                    ? "Tampil di linimasa portofolio publik."
+                    : "Disembunyikan (draft/arsip)."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  visible: prev.visible === false,
+                }))
+              }
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                formData.visible !== false ? "bg-emerald-500" : "bg-zinc-700"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.visible !== false ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block font-semibold text-zinc-300 mb-1">
@@ -3301,19 +4461,38 @@ function TimelineFormModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-zinc-300 mb-1">
-                Jabatan / Gelar (ID) *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="font-semibold text-zinc-300">
+                  Jabatan / Gelar (ID) *
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setAutoSyncEn(!autoSyncEn)}
+                  className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors ${
+                    autoSyncEn
+                      ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                      : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                  }`}
+                  title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+                >
+                  <Link2 className="w-2.5 h-2.5" />
+                  <span>{autoSyncEn ? "Auto-sync" : "Manual"}</span>
+                </button>
+              </div>
               <input
                 type="text"
                 required
                 value={formData.role.id}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    role: { ...formData.role, id: e.target.value },
-                  })
-                }
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setFormData((prev) => ({
+                    ...prev,
+                    role: {
+                      id: val,
+                      en: autoSyncEn ? val : prev.role.en,
+                    },
+                  }));
+                }}
                 placeholder="Senior Full-Stack Developer"
                 className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
               />
@@ -3340,18 +4519,29 @@ function TimelineFormModal({
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Deskripsi Tanggung Jawab &amp; Dampak (ID)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-semibold text-zinc-300">
+                Deskripsi Tanggung Jawab &amp; Dampak (ID)
+              </label>
+              {autoSyncEn && (
+                <span className="text-[10px] text-indigo-400 font-medium">
+                  Auto-sync ke EN aktif
+                </span>
+              )}
+            </div>
             <textarea
               rows={2}
               value={formData.description.id}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  description: { ...formData.description, id: e.target.value },
-                })
-              }
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  description: {
+                    id: val,
+                    en: autoSyncEn ? val : prev.description.en,
+                  },
+                }));
+              }}
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
             />
           </div>
@@ -3416,18 +4606,23 @@ function TestimonialFormModal({
   onClose: () => void;
   onSave: (item: TestimonialItem) => void;
 }) {
-  const [formData, setFormData] = useState<TestimonialItem>(
-    initialItem || {
-      id: "testi-" + Date.now(),
-      author: "",
-      role: "",
-      initials: "",
-      quote: {
-        id: "",
-        en: "",
-      },
-    }
+  const [formData, setFormData] = useState<TestimonialItem>(() =>
+    initialItem
+      ? { ...initialItem, visible: initialItem.visible !== false }
+      : {
+          id: "testi-" + Date.now(),
+          author: "",
+          role: "",
+          initials: "",
+          quote: {
+            id: "",
+            en: "",
+          },
+          visible: true,
+        }
   );
+
+  const [autoSyncEn, setAutoSyncEn] = useState(true);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -3468,6 +4663,51 @@ function TestimonialFormModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-4 text-xs">
+          {/* Status Visibilitas Publik */}
+          <div className="p-3.5 rounded-2xl bg-zinc-900/80 border border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div
+                className={`p-2 rounded-xl ${
+                  formData.visible !== false
+                    ? "bg-emerald-500/10 text-emerald-400"
+                    : "bg-zinc-800 text-zinc-400"
+                }`}
+              >
+                {formData.visible !== false ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
+              </div>
+              <div>
+                <p className="font-semibold text-white text-xs">Visibilitas Publik</p>
+                <p className="text-[11px] text-zinc-400">
+                  {formData.visible !== false
+                    ? "Tampil di carousel rekomendasi publik."
+                    : "Disembunyikan (draft/arsip)."}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  visible: prev.visible === false,
+                }))
+              }
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                formData.visible !== false ? "bg-emerald-500" : "bg-zinc-700"
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  formData.visible !== false ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2">
               <label className="block font-semibold text-zinc-300 mb-1">
@@ -3515,19 +4755,38 @@ function TestimonialFormModal({
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Ulasan / Testimoni (Bahasa Indonesia) *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="font-semibold text-zinc-300">
+                Ulasan / Testimoni (Bahasa Indonesia) *
+              </label>
+              <button
+                type="button"
+                onClick={() => setAutoSyncEn(!autoSyncEn)}
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                  autoSyncEn
+                    ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
+                    : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+                }`}
+                title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+              >
+                <Link2 className="w-2.5 h-2.5" />
+                <span>{autoSyncEn ? "Auto-sync EN aktif" : "Auto-sync EN mati"}</span>
+              </button>
+            </div>
             <textarea
               required
               rows={3}
               value={formData.quote.id}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  quote: { ...formData.quote, id: e.target.value },
-                })
-              }
+              onChange={(e) => {
+                const val = e.target.value;
+                setFormData((prev) => ({
+                  ...prev,
+                  quote: {
+                    id: val,
+                    en: autoSyncEn ? val : prev.quote.en,
+                  },
+                }));
+              }}
               placeholder="Tuliskan ulasan atau rekomendasi rekan dalam Bahasa Indonesia..."
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500 leading-relaxed"
             />

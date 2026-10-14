@@ -78,16 +78,20 @@ export const Terminal: React.FC<TerminalProps> = ({
         profile?.linkedin || "https://linkedin.com"
       }`;
     } else if (trimmed === "skills" && skills?.length) {
-      output = skills
-        .map((s) => `• ${s.name} (${s.level}% - ${s.category})`)
-        .join("\n");
+      const visibleSkills = skills.filter((s) => s.visible !== false);
+      output = visibleSkills.length
+        ? visibleSkills.map((s) => `• ${s.name} (${s.level}% - ${s.category})`).join("\n")
+        : (lang === "id" ? "Tidak ada keahlian yang dapat ditampilkan." : "No skills available.");
     } else if (trimmed === "projects" && projects?.length) {
-      output = projects
-        .map(
-          (p) =>
-            `• ${p.title}\n  Summary: ${p.summary[lang]}\n  Live: ${p.liveUrl || "-"}`
-        )
-        .join("\n\n");
+      const visibleProjects = projects.filter((p) => p.visible !== false);
+      output = visibleProjects.length
+        ? visibleProjects
+            .map(
+              (p) =>
+                `• ${p.title}\n  Summary: ${p.summary[lang]}\n  Live: ${p.liveUrl || "-"}`
+            )
+            .join("\n\n")
+        : (lang === "id" ? "Tidak ada proyek yang dapat ditampilkan." : "No projects available.");
     } else {
       const commandResult = terminalCommands[trimmed];
       output = commandResult

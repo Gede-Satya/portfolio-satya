@@ -21,10 +21,11 @@ export const Skills: React.FC<SkillsProps> = ({ lang, skills }) => {
   ];
 
   const sourceSkills = skills ?? skillsData;
+  const visibleSkills = sourceSkills.filter((s) => s.visible !== false);
   const filteredSkills =
     activeCategory === "all"
-      ? sourceSkills
-      : sourceSkills.filter((s) => s.category === activeCategory);
+      ? visibleSkills
+      : visibleSkills.filter((s) => s.category === activeCategory);
 
   return (
     <section id="skills" className="py-20 border-t border-zinc-200/60 dark:border-zinc-800/60">
@@ -62,8 +63,15 @@ export const Skills: React.FC<SkillsProps> = ({ lang, skills }) => {
         </div>
 
         {/* Skills Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredSkills.map((skill: SkillItem, index: number) => (
+        {filteredSkills.length === 0 ? (
+          <div className="text-center py-16 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-800 text-zinc-500 font-mono text-xs">
+            {lang === "id"
+              ? "Tidak ada keahlian yang ditampilkan pada kategori ini."
+              : "No skills are currently visible in this category."}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {filteredSkills.map((skill: SkillItem, index: number) => (
             <div
               key={index}
               className="p-5 rounded-2xl glass-panel hover:border-zinc-300 dark:hover:border-zinc-700 transition-all flex flex-col justify-between group"
@@ -118,6 +126,7 @@ export const Skills: React.FC<SkillsProps> = ({ lang, skills }) => {
             </div>
           ))}
         </div>
+        )}
       </div>
     </section>
   );

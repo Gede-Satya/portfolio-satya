@@ -11,7 +11,8 @@ interface ExperienceProps {
 }
 
 export const Experience: React.FC<ExperienceProps> = ({ lang, timeline }) => {
-  const items = timeline || timelineData;
+  const allItems = timeline || timelineData;
+  const items = allItems.filter((item) => item.visible !== false);
   return (
     <section id="experience" className="py-20 border-t border-zinc-200/60 dark:border-zinc-800/60">
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
@@ -31,8 +32,15 @@ export const Experience: React.FC<ExperienceProps> = ({ lang, timeline }) => {
         </div>
 
         {/* Timeline */}
-        <div className="relative border-l border-zinc-200 dark:border-zinc-800 ml-4 sm:ml-6 space-y-12">
-          {items.map((item: TimelineItem) => (
+        {items.length === 0 ? (
+          <div className="text-center py-16 rounded-3xl border border-dashed border-zinc-300 dark:border-zinc-800 text-zinc-500 font-mono text-xs">
+            {lang === "id"
+              ? "Belum ada riwayat pengalaman yang ditampilkan ke publik."
+              : "No experience timeline records are currently visible."}
+          </div>
+        ) : (
+          <div className="relative border-l border-zinc-200 dark:border-zinc-800 ml-4 sm:ml-6 space-y-12">
+            {items.map((item: TimelineItem) => (
             <div key={item.id} className="relative pl-8 sm:pl-10 group">
               {/* Marker Dot */}
               <div className="absolute -left-[17px] top-1.5 w-8 h-8 rounded-full bg-white dark:bg-[#121217] border-2 border-indigo-500 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm group-hover:scale-110 transition-transform">
@@ -88,6 +96,7 @@ export const Experience: React.FC<ExperienceProps> = ({ lang, timeline }) => {
             </div>
           ))}
         </div>
+        )}
       </div>
     </section>
   );

@@ -23,6 +23,7 @@ export interface ProjectItem {
     highlights: { id: string[]; en: string[] };
     challengesSolved: { id: string; en: string };
   };
+  visible?: boolean;
 }
 
 export interface SkillItem {
@@ -33,6 +34,7 @@ export interface SkillItem {
   desc: { id: string; en: string };
   progress: number;
   iconText: string;
+  visible?: boolean;
 }
 
 export interface TimelineItem {
@@ -44,6 +46,7 @@ export interface TimelineItem {
   badgeType: "work" | "education";
   description: { id: string; en: string };
   skills?: string[];
+  visible?: boolean;
 }
 
 export interface TestimonialItem {
@@ -52,4 +55,5 @@ export interface TestimonialItem {
   author: string;
   role: string;
   initials: string;
+  visible?: boolean;
 }
