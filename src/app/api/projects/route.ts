@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getPortfolioContentAsync, savePortfolioContentAsync } from "@/lib/storage";
 import { ProjectItem } from "@/types/portfolio";
 
@@ -19,6 +20,13 @@ export async function POST(request: Request) {
 
     content.projects = [newProject, ...content.projects];
     await savePortfolioContentAsync(content);
+
+    try {
+      revalidatePath("/");
+      revalidatePath("/admin");
+    } catch (e) {
+      // Ignore during development or SSR
+    }
 
     return NextResponse.json({
       success: true,
@@ -60,6 +68,13 @@ export async function PUT(request: Request) {
 
     await savePortfolioContentAsync(content);
 
+    try {
+      revalidatePath("/");
+      revalidatePath("/admin");
+    } catch (e) {
+      // Ignore during development or SSR
+    }
+
     return NextResponse.json({
       success: true,
       message: "Proyek berhasil diperbarui",
@@ -97,6 +112,13 @@ export async function DELETE(request: Request) {
     }
 
     await savePortfolioContentAsync(content);
+
+    try {
+      revalidatePath("/");
+      revalidatePath("/admin");
+    } catch (e) {
+      // Ignore during development or SSR
+    }
 
     return NextResponse.json({
       success: true,

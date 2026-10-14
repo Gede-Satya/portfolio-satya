@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   getPortfolioContentAsync,
   savePortfolioContentAsync,
@@ -23,6 +24,10 @@ export async function PUT(request: Request) {
 
     if (body.action === "reset") {
       const resetData = await resetToDefaultContentAsync();
+      try {
+        revalidatePath("/");
+        revalidatePath("/admin");
+      } catch (e) {}
       return NextResponse.json({
         success: true,
         message: "Data portofolio berhasil di-reset ke nilai default",
@@ -59,6 +64,10 @@ export async function PUT(request: Request) {
 
     if (body.fullContent) {
       await savePortfolioContentAsync(body.fullContent);
+      try {
+        revalidatePath("/");
+        revalidatePath("/admin");
+      } catch (e) {}
       return NextResponse.json({
         success: true,
         message: "Seluruh konten portofolio berhasil disimpan",
@@ -67,6 +76,11 @@ export async function PUT(request: Request) {
     }
 
     await savePortfolioContentAsync(current);
+    try {
+      revalidatePath("/");
+      revalidatePath("/admin");
+    } catch (e) {}
+
     return NextResponse.json({
       success: true,
       message: "Profil portofolio berhasil diperbarui",

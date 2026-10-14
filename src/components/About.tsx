@@ -151,7 +151,13 @@ export const About: React.FC<AboutProps> = ({ lang, about, profile }) => {
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Bio Card */}
-          <div className="lg:col-span-5 p-6 sm:p-8 rounded-2xl glass-panel space-y-6">
+          <div
+            className={`${
+              pillarsList.length > 0
+                ? "lg:col-span-5"
+                : "lg:col-span-12 max-w-4xl mx-auto w-full"
+            } p-6 sm:p-8 rounded-2xl glass-panel space-y-6 transition-all duration-300`}
+          >
             <h3 className="text-lg font-bold text-zinc-900 dark:text-white">
               {bioHeading}
             </h3>
@@ -202,25 +208,57 @@ export const About: React.FC<AboutProps> = ({ lang, about, profile }) => {
             </div>
           </div>
 
-          {/* Right 4 Pillars Cards */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {pillarsList.map((pillar, idx) => (
-              <div
-                key={pillar.id || idx}
-                className="p-6 rounded-2xl glass-panel hover:border-zinc-400/50 dark:hover:border-zinc-600/50 transition-all group"
-              >
-                <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                  {renderPillarIcon(pillar.icon)}
-                </div>
-                <h4 className="text-base font-bold text-zinc-900 dark:text-white mb-2">
-                  {pillar.title[lang]}
-                </h4>
-                <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-                  {pillar.desc[lang]}
-                </p>
-              </div>
-            ))}
-          </div>
+          {/* Right Dynamic Pillars Cards */}
+          {pillarsList.length > 0 && (
+            <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-fr">
+              {pillarsList.map((pillar, idx) => {
+                // If 1 card total: span 2 cols
+                // If 3 cards total: 3rd card (idx === 2) spans 2 cols to fill row 2 completely without gaps
+                const isSpanFull =
+                  pillarsList.length === 1 ||
+                  (pillarsList.length === 3 && idx === 2);
+
+                return (
+                  <div
+                    key={pillar.id || idx}
+                    className={`p-6 rounded-2xl glass-panel hover:border-zinc-400/50 dark:hover:border-zinc-600/50 transition-all duration-300 group flex flex-col justify-between ${
+                      isSpanFull ? "sm:col-span-2" : ""
+                    }`}
+                  >
+                    {isSpanFull ? (
+                      <div className="sm:flex sm:items-start sm:gap-4 w-full">
+                        <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 flex items-center justify-center shrink-0 mb-4 sm:mb-0 group-hover:scale-105 transition-transform">
+                          {renderPillarIcon(pillar.icon)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-base font-bold text-zinc-900 dark:text-white mb-2">
+                            {pillar.title[lang]}
+                          </h4>
+                          <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                            {pillar.desc[lang]}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
+                            {renderPillarIcon(pillar.icon)}
+                          </div>
+                          <h4 className="text-base font-bold text-zinc-900 dark:text-white mb-2">
+                            {pillar.title[lang]}
+                          </h4>
+                        </div>
+                        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mt-1">
+                          {pillar.desc[lang]}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </section>

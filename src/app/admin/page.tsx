@@ -33,6 +33,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Activity,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import {
   PortfolioContent,
@@ -42,6 +44,7 @@ import { ProjectItem, SkillItem, TimelineItem, TestimonialItem } from "@/types/p
 import { Toast } from "@/components/Toast";
 import { ImageUpload } from "@/components/ImageUpload";
 import { ProjectModal } from "@/components/ProjectModal";
+import { translateIdToEn } from "@/lib/translate";
 
 type AdminTab =
   | "overview"
@@ -53,6 +56,38 @@ type AdminTab =
   | "testimonials"
   | "inbox"
   | "settings";
+
+function TranslateButton({
+  onClick,
+  isTranslating,
+  label = "Terjemahkan ke EN",
+}: {
+  onClick: () => void;
+  isTranslating?: boolean;
+  label?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={isTranslating}
+      className="text-[10px] text-indigo-400 hover:text-indigo-300 font-mono inline-flex items-center gap-1 transition-colors disabled:opacity-50"
+      title="Terjemahkan otomatis dari teks Bahasa Indonesia ke Bahasa Inggris"
+    >
+      {isTranslating ? (
+        <>
+          <Loader2 className="w-3 h-3 animate-spin text-indigo-400" />
+          <span>Menerjemahkan...</span>
+        </>
+      ) : (
+        <>
+          <Sparkles className="w-3 h-3 text-indigo-400" />
+          <span>{label}</span>
+        </>
+      )}
+    </button>
+  );
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -95,9 +130,37 @@ export default function AdminDashboardPage() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
+  // Translation in-progress tracking
+  const [translatingKey, setTranslatingKey] = useState<string | null>(null);
+
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleTranslate = async (
+    key: string,
+    sourceText: string,
+    onApply: (translated: string) => void
+  ) => {
+    if (!sourceText || !sourceText.trim()) {
+      showToast("Teks Bahasa Indonesia masih kosong untuk diterjemahkan");
+      return;
+    }
+    setTranslatingKey(key);
+    try {
+      const translated = await translateIdToEn(sourceText);
+      if (translated) {
+        onApply(translated);
+        showToast("Berhasil diterjemahkan ke Bahasa Inggris ✨");
+      } else {
+        showToast("Gagal mendapatkan terjemahan dari server");
+      }
+    } catch {
+      showToast("Terjadi kesalahan saat menerjemahkan");
+    } finally {
+      setTranslatingKey(null);
+    }
   };
 
   const loadData = useCallback(async (showLoadingSpinner = false) => {
@@ -213,6 +276,17 @@ export default function AdminDashboardPage() {
   const handleSaveProject = async (project: ProjectItem) => {
     setSaving(true);
     const isEditing = editingProject && editingProject.id === project.id;
+
+    // Optimistically update admin state so cards and thumbnails reflect changes instantly
+    if (content) {
+      setContent({
+        ...content,
+        projects: isEditing
+          ? content.projects.map((p) => (p.id === project.id ? { ...p, ...project } : p))
+          : [project, ...content.projects],
+      });
+    }
+
     try {
       const res = await fetch("/api/projects", {
         method: isEditing ? "PUT" : "POST",
@@ -230,6 +304,7 @@ export default function AdminDashboardPage() {
       }
     } catch (err) {
       showToast("Gagal menyimpan proyek");
+      loadData(false);
     } finally {
       setSaving(false);
     }
@@ -1299,11 +1374,29 @@ export default function AdminDashboardPage() {
                           profile: {
                             ...content.profile,
                             headline: {
+                              ...content.profile.headline,
                               id: val,
-                              en: val,
                             },
                           },
                         });
+                      }}
+                      onBlur={() => {
+                        const idText = content.profile.headline.id?.trim();
+                        if (idText && (!content.profile.headline.en || content.profile.headline.en === content.profile.headline.id)) {
+                          handleTranslate("profile.headline", idText, (translated) => {
+                            setContent((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    profile: {
+                                      ...prev.profile,
+                                      headline: { ...prev.profile.headline, en: translated },
+                                    },
+                                  }
+                                : null
+                            );
+                          });
+                        }
                       }}
                       className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                     />
@@ -1314,9 +1407,24 @@ export default function AdminDashboardPage() {
                       <label className="block text-xs font-semibold text-zinc-300">
                         Main Headline (English)
                       </label>
-                      <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                        <Link2 className="w-3 h-3" /> Mengikuti ID
-                      </span>
+                      <TranslateButton
+                        onClick={() =>
+                          handleTranslate("profile.headline", content.profile.headline.id, (translated) => {
+                            setContent((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    profile: {
+                                      ...prev.profile,
+                                      headline: { ...prev.profile.headline, en: translated },
+                                    },
+                                  }
+                                : null
+                            );
+                          })
+                        }
+                        isTranslating={translatingKey === "profile.headline"}
+                      />
                     </div>
                     <input
                       type="text"
@@ -1351,11 +1459,29 @@ export default function AdminDashboardPage() {
                           profile: {
                             ...content.profile,
                             subheadline: {
+                              ...content.profile.subheadline,
                               id: val,
-                              en: val,
                             },
                           },
                         });
+                      }}
+                      onBlur={() => {
+                        const idText = content.profile.subheadline.id?.trim();
+                        if (idText && (!content.profile.subheadline.en || content.profile.subheadline.en === content.profile.subheadline.id)) {
+                          handleTranslate("profile.subheadline", idText, (translated) => {
+                            setContent((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    profile: {
+                                      ...prev.profile,
+                                      subheadline: { ...prev.profile.subheadline, en: translated },
+                                    },
+                                  }
+                                : null
+                            );
+                          });
+                        }
                       }}
                       className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                     />
@@ -1366,9 +1492,24 @@ export default function AdminDashboardPage() {
                       <label className="block text-xs font-semibold text-zinc-300">
                         Sub-headline (English)
                       </label>
-                      <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                        <Link2 className="w-3 h-3" /> Mengikuti ID
-                      </span>
+                      <TranslateButton
+                        onClick={() =>
+                          handleTranslate("profile.subheadline", content.profile.subheadline.id, (translated) => {
+                            setContent((prev) =>
+                              prev
+                                ? {
+                                    ...prev,
+                                    profile: {
+                                      ...prev.profile,
+                                      subheadline: { ...prev.profile.subheadline, en: translated },
+                                    },
+                                  }
+                                : null
+                            );
+                          })
+                        }
+                        isTranslating={translatingKey === "profile.subheadline"}
+                      />
                     </div>
                     <textarea
                       rows={2}
@@ -1441,11 +1582,29 @@ export default function AdminDashboardPage() {
                             about: {
                               ...content.about,
                               kicker: {
+                                ...content.about?.kicker,
                                 id: val,
-                                en: val,
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.kicker?.id?.trim();
+                          if (idText && (!content.about?.kicker?.en || content.about?.kicker?.en === content.about?.kicker?.id)) {
+                            handleTranslate("about.kicker", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        kicker: { ...prev.about.kicker, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         placeholder="Profil & Pendekatan Teknis"
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
@@ -1457,9 +1616,24 @@ export default function AdminDashboardPage() {
                         <label className="block text-xs font-semibold text-zinc-300">
                           Kicker / Category Badge (English)
                         </label>
-                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                          <Link2 className="w-3 h-3" /> Mengikuti ID
-                        </span>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("about.kicker", content.about?.kicker?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        kicker: { ...prev.about.kicker, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "about.kicker"}
+                        />
                       </div>
                       <input
                         type="text"
@@ -1497,11 +1671,29 @@ export default function AdminDashboardPage() {
                             about: {
                               ...content.about,
                               title: {
+                                ...content.about?.title,
                                 id: val,
-                                en: val,
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.title?.id?.trim();
+                          if (idText && (!content.about?.title?.en || content.about?.title?.en === content.about?.title?.id)) {
+                            handleTranslate("about.title", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        title: { ...prev.about.title, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
@@ -1512,9 +1704,24 @@ export default function AdminDashboardPage() {
                         <label className="block text-xs font-semibold text-zinc-300">
                           Section Main Title (English)
                         </label>
-                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                          <Link2 className="w-3 h-3" /> Mengikuti ID
-                        </span>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("about.title", content.about?.title?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        title: { ...prev.about.title, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "about.title"}
+                        />
                       </div>
                       <input
                         type="text"
@@ -1551,11 +1758,29 @@ export default function AdminDashboardPage() {
                             about: {
                               ...content.about,
                               subtitle: {
+                                ...content.about?.subtitle,
                                 id: val,
-                                en: val,
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.subtitle?.id?.trim();
+                          if (idText && (!content.about?.subtitle?.en || content.about?.subtitle?.en === content.about?.subtitle?.id)) {
+                            handleTranslate("about.subtitle", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        subtitle: { ...prev.about.subtitle, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
@@ -1566,9 +1791,24 @@ export default function AdminDashboardPage() {
                         <label className="block text-xs font-semibold text-zinc-300">
                           Section Subtitle (English)
                         </label>
-                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                          <Link2 className="w-3 h-3" /> Mengikuti ID
-                        </span>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("about.subtitle", content.about?.subtitle?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        subtitle: { ...prev.about.subtitle, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "about.subtitle"}
+                        />
                       </div>
                       <textarea
                         rows={2}
@@ -1612,11 +1852,29 @@ export default function AdminDashboardPage() {
                             about: {
                               ...content.about,
                               bioHeading: {
+                                ...content.about?.bioHeading,
                                 id: val,
-                                en: val,
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.bioHeading?.id?.trim();
+                          if (idText && (!content.about?.bioHeading?.en || content.about?.bioHeading?.en === content.about?.bioHeading?.id)) {
+                            handleTranslate("about.bioHeading", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        bioHeading: { ...prev.about.bioHeading, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
@@ -1627,9 +1885,24 @@ export default function AdminDashboardPage() {
                         <label className="block text-xs font-semibold text-zinc-300">
                           Bio Card Heading (English)
                         </label>
-                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                          <Link2 className="w-3 h-3" /> Mengikuti ID
-                        </span>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("about.bioHeading", content.about?.bioHeading?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        bioHeading: { ...prev.about.bioHeading, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "about.bioHeading"}
+                        />
                       </div>
                       <input
                         type="text"
@@ -1666,11 +1939,29 @@ export default function AdminDashboardPage() {
                             about: {
                               ...content.about,
                               bioP1: {
+                                ...content.about?.bioP1,
                                 id: val,
-                                en: val,
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.bioP1?.id?.trim();
+                          if (idText && (!content.about?.bioP1?.en || content.about?.bioP1?.en === content.about?.bioP1?.id)) {
+                            handleTranslate("about.bioP1", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        bioP1: { ...prev.about.bioP1, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
@@ -1681,9 +1972,24 @@ export default function AdminDashboardPage() {
                         <label className="block text-xs font-semibold text-zinc-300">
                           Paragraph 1 – Background &amp; Core Mastery (English)
                         </label>
-                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                          <Link2 className="w-3 h-3" /> Mengikuti ID
-                        </span>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("about.bioP1", content.about?.bioP1?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        bioP1: { ...prev.about.bioP1, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "about.bioP1"}
+                        />
                       </div>
                       <textarea
                         rows={3}
@@ -1718,11 +2024,29 @@ export default function AdminDashboardPage() {
                             about: {
                               ...content.about,
                               bioP2: {
+                                ...content.about?.bioP2,
                                 id: val,
-                                en: val,
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.bioP2?.id?.trim();
+                          if (idText && (!content.about?.bioP2?.en || content.about?.bioP2?.en === content.about?.bioP2?.id)) {
+                            handleTranslate("about.bioP2", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        bioP2: { ...prev.about.bioP2, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
@@ -1733,9 +2057,24 @@ export default function AdminDashboardPage() {
                         <label className="block text-xs font-semibold text-zinc-300">
                           Paragraph 2 – Philosophy &amp; Quality Value (English)
                         </label>
-                        <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                          <Link2 className="w-3 h-3" /> Mengikuti ID
-                        </span>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("about.bioP2", content.about?.bioP2?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        bioP2: { ...prev.about.bioP2, en: translated },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "about.bioP2"}
+                        />
                       </div>
                       <textarea
                         rows={3}
@@ -1781,12 +2120,33 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 location: {
+                                  ...content.about?.specs?.location,
                                   id: val,
-                                  en: val,
                                 },
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.specs?.location?.id?.trim();
+                          if (idText && (!content.about?.specs?.location?.en || content.about?.specs?.location?.en === content.about?.specs?.location?.id)) {
+                            handleTranslate("specs.location", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          location: { ...prev.about.specs.location, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         placeholder="Bali / Jakarta, Indonesia (WITA / WIB)"
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
@@ -1794,9 +2154,32 @@ export default function AdminDashboardPage() {
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Spec: Location (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Spec: Location (English)
+                        </label>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("specs.location", content.about?.specs?.location?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          location: { ...prev.about.specs.location, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "specs.location"}
+                        />
+                      </div>
                       <input
                         type="text"
                         value={content.about?.specs?.location?.en || ""}
@@ -1836,21 +2219,65 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 education: {
+                                  ...content.about?.specs?.education,
                                   id: val,
-                                  en: val,
                                 },
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.specs?.education?.id?.trim();
+                          if (idText && (!content.about?.specs?.education?.en || content.about?.specs?.education?.en === content.about?.specs?.education?.id)) {
+                            handleTranslate("specs.education", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          education: { ...prev.about.specs.education, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Spec: Education (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Spec: Education (English)
+                        </label>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("specs.education", content.about?.specs?.education?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          education: { ...prev.about.specs.education, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "specs.education"}
+                        />
+                      </div>
                       <input
                         type="text"
                         value={content.about?.specs?.education?.en || ""}
@@ -1889,21 +2316,65 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 focus: {
+                                  ...content.about?.specs?.focus,
                                   id: val,
-                                  en: val,
                                 },
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.specs?.focus?.id?.trim();
+                          if (idText && (!content.about?.specs?.focus?.en || content.about?.specs?.focus?.en === content.about?.specs?.focus?.id)) {
+                            handleTranslate("specs.focus", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          focus: { ...prev.about.specs.focus, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Spec: Primary Focus (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Spec: Primary Focus (English)
+                        </label>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("specs.focus", content.about?.specs?.focus?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          focus: { ...prev.about.specs.focus, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "specs.focus"}
+                        />
+                      </div>
                       <input
                         type="text"
                         value={content.about?.specs?.focus?.en || ""}
@@ -1942,21 +2413,65 @@ export default function AdminDashboardPage() {
                               specs: {
                                 ...content.about?.specs,
                                 availability: {
+                                  ...content.about?.specs?.availability,
                                   id: val,
-                                  en: val,
                                 },
                               },
                             },
                           });
+                        }}
+                        onBlur={() => {
+                          const idText = content.about?.specs?.availability?.id?.trim();
+                          if (idText && (!content.about?.specs?.availability?.en || content.about?.specs?.availability?.en === content.about?.specs?.availability?.id)) {
+                            handleTranslate("specs.availability", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          availability: { ...prev.about.specs.availability, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
                         }}
                         className="w-full px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-sm text-white outline-none focus:border-indigo-500"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                        Spec: Availability Status (English)
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-zinc-300">
+                          Spec: Availability Status (English)
+                        </label>
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("specs.availability", content.about?.specs?.availability?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      about: {
+                                        ...prev.about,
+                                        specs: {
+                                          ...prev.about.specs,
+                                          availability: { ...prev.about.specs.availability, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "specs.availability"}
+                        />
+                      </div>
                       <input
                         type="text"
                         value={content.about?.specs?.availability?.en || ""}
@@ -2074,8 +2589,8 @@ export default function AdminDashboardPage() {
                                 newPillars[pIdx] = {
                                   ...newPillars[pIdx],
                                   title: {
+                                    ...newPillars[pIdx].title,
                                     id: val,
-                                    en: val,
                                   },
                                 };
                                 setContent({
@@ -2086,14 +2601,52 @@ export default function AdminDashboardPage() {
                                   },
                                 });
                               }}
+                              onBlur={() => {
+                                const idText = pillar.title?.id?.trim();
+                                if (idText && (!pillar.title?.en || pillar.title?.en === pillar.title?.id)) {
+                                  handleTranslate(`pillar.${pIdx}.title`, idText, (translated) => {
+                                    setContent((prev) => {
+                                      if (!prev) return null;
+                                      const pList = [...(prev.about?.pillars || [])];
+                                      if (pList[pIdx]) {
+                                        pList[pIdx] = {
+                                          ...pList[pIdx],
+                                          title: { ...pList[pIdx].title, en: translated },
+                                        };
+                                      }
+                                      return { ...prev, about: { ...prev.about, pillars: pList } };
+                                    });
+                                  });
+                                }
+                              }}
                               className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-white outline-none focus:border-indigo-500"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                              Pillar Title (EN)
-                            </label>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[11px] font-semibold text-zinc-300">
+                                Pillar Title (EN)
+                              </label>
+                              <TranslateButton
+                                onClick={() =>
+                                  handleTranslate(`pillar.${pIdx}.title`, pillar.title?.id || "", (translated) => {
+                                    setContent((prev) => {
+                                      if (!prev) return null;
+                                      const pList = [...(prev.about?.pillars || [])];
+                                      if (pList[pIdx]) {
+                                        pList[pIdx] = {
+                                          ...pList[pIdx],
+                                          title: { ...pList[pIdx].title, en: translated },
+                                        };
+                                      }
+                                      return { ...prev, about: { ...prev.about, pillars: pList } };
+                                    });
+                                  })
+                                }
+                                isTranslating={translatingKey === `pillar.${pIdx}.title`}
+                              />
+                            </div>
                             <input
                               type="text"
                               value={pillar.title.en}
@@ -2133,8 +2686,8 @@ export default function AdminDashboardPage() {
                                 newPillars[pIdx] = {
                                   ...newPillars[pIdx],
                                   desc: {
+                                    ...newPillars[pIdx].desc,
                                     id: val,
-                                    en: val,
                                   },
                                 };
                                 setContent({
@@ -2145,14 +2698,52 @@ export default function AdminDashboardPage() {
                                   },
                                 });
                               }}
+                              onBlur={() => {
+                                const idText = pillar.desc?.id?.trim();
+                                if (idText && (!pillar.desc?.en || pillar.desc?.en === pillar.desc?.id)) {
+                                  handleTranslate(`pillar.${pIdx}.desc`, idText, (translated) => {
+                                    setContent((prev) => {
+                                      if (!prev) return null;
+                                      const pList = [...(prev.about?.pillars || [])];
+                                      if (pList[pIdx]) {
+                                        pList[pIdx] = {
+                                          ...pList[pIdx],
+                                          desc: { ...pList[pIdx].desc, en: translated },
+                                        };
+                                      }
+                                      return { ...prev, about: { ...prev.about, pillars: pList } };
+                                    });
+                                  });
+                                }
+                              }}
                               className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-white outline-none focus:border-indigo-500"
                             />
                           </div>
 
                           <div>
-                            <label className="block text-[11px] font-semibold text-zinc-300 mb-1">
-                              Pillar Description (EN)
-                            </label>
+                            <div className="flex items-center justify-between mb-1">
+                              <label className="block text-[11px] font-semibold text-zinc-300">
+                                Pillar Description (EN)
+                              </label>
+                              <TranslateButton
+                                onClick={() =>
+                                  handleTranslate(`pillar.${pIdx}.desc`, pillar.desc?.id || "", (translated) => {
+                                    setContent((prev) => {
+                                      if (!prev) return null;
+                                      const pList = [...(prev.about?.pillars || [])];
+                                      if (pList[pIdx]) {
+                                        pList[pIdx] = {
+                                          ...pList[pIdx],
+                                          desc: { ...pList[pIdx].desc, en: translated },
+                                        };
+                                      }
+                                      return { ...prev, about: { ...prev.about, pillars: pList } };
+                                    });
+                                  })
+                                }
+                                isTranslating={translatingKey === `pillar.${pIdx}.desc`}
+                              />
+                            </div>
                             <textarea
                               rows={3}
                               value={pillar.desc.en}
@@ -2224,37 +2815,82 @@ export default function AdminDashboardPage() {
                               years: {
                                 ...content.heroStats?.years,
                                 lbl: {
+                                  ...content.heroStats?.years?.lbl,
                                   id: val,
-                                  en: val,
                                 },
                               },
                             },
                           });
                         }}
+                        onBlur={() => {
+                          const idText = content.heroStats?.years?.lbl?.id?.trim();
+                          if (idText && (!content.heroStats?.years?.lbl?.en || content.heroStats?.years?.lbl?.en === content.heroStats?.years?.lbl?.id)) {
+                            handleTranslate("heroStats.years", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      heroStats: {
+                                        ...prev.heroStats,
+                                        years: {
+                                          ...prev.heroStats?.years,
+                                          lbl: { ...prev.heroStats?.years?.lbl, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
+                        }}
                         placeholder="Thn Pengalaman (ID)"
                         className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
                       />
-                      <input
-                        type="text"
-                        value={content.heroStats?.years?.lbl?.en || ""}
-                        onChange={(e) =>
-                          setContent({
-                            ...content,
-                            heroStats: {
-                              ...content.heroStats,
-                              years: {
-                                ...content.heroStats?.years,
-                                lbl: {
-                                  ...content.heroStats?.years?.lbl,
-                                  en: e.target.value,
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={content.heroStats?.years?.lbl?.en || ""}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              heroStats: {
+                                ...content.heroStats,
+                                years: {
+                                  ...content.heroStats?.years,
+                                  lbl: {
+                                    ...content.heroStats?.years?.lbl,
+                                    en: e.target.value,
+                                  },
                                 },
                               },
-                            },
-                          })
-                        }
-                        placeholder="Years Exp (EN)"
-                        className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
-                      />
+                            })
+                          }
+                          placeholder="Years Exp (EN)"
+                          className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
+                        />
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("heroStats.years", content.heroStats?.years?.lbl?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      heroStats: {
+                                        ...prev.heroStats,
+                                        years: {
+                                          ...prev.heroStats?.years,
+                                          lbl: { ...prev.heroStats?.years?.lbl, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "heroStats.years"}
+                          label="EN"
+                        />
+                      </div>
                     </div>
 
                     {/* Stat 2 */}
@@ -2292,37 +2928,82 @@ export default function AdminDashboardPage() {
                               projects: {
                                 ...content.heroStats?.projects,
                                 lbl: {
+                                  ...content.heroStats?.projects?.lbl,
                                   id: val,
-                                  en: val,
                                 },
                               },
                             },
                           });
                         }}
+                        onBlur={() => {
+                          const idText = content.heroStats?.projects?.lbl?.id?.trim();
+                          if (idText && (!content.heroStats?.projects?.lbl?.en || content.heroStats?.projects?.lbl?.en === content.heroStats?.projects?.lbl?.id)) {
+                            handleTranslate("heroStats.projects", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      heroStats: {
+                                        ...prev.heroStats,
+                                        projects: {
+                                          ...prev.heroStats?.projects,
+                                          lbl: { ...prev.heroStats?.projects?.lbl, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
+                        }}
                         placeholder="Proyek Selesai (ID)"
                         className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
                       />
-                      <input
-                        type="text"
-                        value={content.heroStats?.projects?.lbl?.en || ""}
-                        onChange={(e) =>
-                          setContent({
-                            ...content,
-                            heroStats: {
-                              ...content.heroStats,
-                              projects: {
-                                ...content.heroStats?.projects,
-                                lbl: {
-                                  ...content.heroStats?.projects?.lbl,
-                                  en: e.target.value,
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={content.heroStats?.projects?.lbl?.en || ""}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              heroStats: {
+                                ...content.heroStats,
+                                projects: {
+                                  ...content.heroStats?.projects,
+                                  lbl: {
+                                    ...content.heroStats?.projects?.lbl,
+                                    en: e.target.value,
+                                  },
                                 },
                               },
-                            },
-                          })
-                        }
-                        placeholder="Delivered (EN)"
-                        className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
-                      />
+                            })
+                          }
+                          placeholder="Delivered (EN)"
+                          className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
+                        />
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("heroStats.projects", content.heroStats?.projects?.lbl?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      heroStats: {
+                                        ...prev.heroStats,
+                                        projects: {
+                                          ...prev.heroStats?.projects,
+                                          lbl: { ...prev.heroStats?.projects?.lbl, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "heroStats.projects"}
+                          label="EN"
+                        />
+                      </div>
                     </div>
 
                     {/* Stat 3 */}
@@ -2360,37 +3041,82 @@ export default function AdminDashboardPage() {
                               uptime: {
                                 ...content.heroStats?.uptime,
                                 lbl: {
+                                  ...content.heroStats?.uptime?.lbl,
                                   id: val,
-                                  en: val,
                                 },
                               },
                             },
                           });
                         }}
+                        onBlur={() => {
+                          const idText = content.heroStats?.uptime?.lbl?.id?.trim();
+                          if (idText && (!content.heroStats?.uptime?.lbl?.en || content.heroStats?.uptime?.lbl?.en === content.heroStats?.uptime?.lbl?.id)) {
+                            handleTranslate("heroStats.uptime", idText, (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      heroStats: {
+                                        ...prev.heroStats,
+                                        uptime: {
+                                          ...prev.heroStats?.uptime,
+                                          lbl: { ...prev.heroStats?.uptime?.lbl, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            });
+                          }
+                        }}
                         placeholder="Fokus Uptime (ID)"
                         className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
                       />
-                      <input
-                        type="text"
-                        value={content.heroStats?.uptime?.lbl?.en || ""}
-                        onChange={(e) =>
-                          setContent({
-                            ...content,
-                            heroStats: {
-                              ...content.heroStats,
-                              uptime: {
-                                ...content.heroStats?.uptime,
-                                lbl: {
-                                  ...content.heroStats?.uptime?.lbl,
-                                  en: e.target.value,
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="text"
+                          value={content.heroStats?.uptime?.lbl?.en || ""}
+                          onChange={(e) =>
+                            setContent({
+                              ...content,
+                              heroStats: {
+                                ...content.heroStats,
+                                uptime: {
+                                  ...content.heroStats?.uptime,
+                                  lbl: {
+                                    ...content.heroStats?.uptime?.lbl,
+                                    en: e.target.value,
+                                  },
                                 },
                               },
-                            },
-                          })
-                        }
-                        placeholder="Uptime SLA (EN)"
-                        className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
-                      />
+                            })
+                          }
+                          placeholder="Uptime SLA (EN)"
+                          className="w-full px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-[11px] text-zinc-300 outline-none"
+                        />
+                        <TranslateButton
+                          onClick={() =>
+                            handleTranslate("heroStats.uptime", content.heroStats?.uptime?.lbl?.id || "", (translated) => {
+                              setContent((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      heroStats: {
+                                        ...prev.heroStats,
+                                        uptime: {
+                                          ...prev.heroStats?.uptime,
+                                          lbl: { ...prev.heroStats?.uptime?.lbl, en: translated },
+                                        },
+                                      },
+                                    }
+                                  : null
+                              );
+                            })
+                          }
+                          isTranslating={translatingKey === "heroStats.uptime"}
+                          label="EN"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3291,9 +4017,27 @@ function ProjectFormModal({
   const [highlightsInputEn, setHighlightsInputEn] = useState(
     () => formData.details?.highlights?.en?.join("\n") || ""
   );
-  const [autoSyncEn, setAutoSyncEn] = useState(true);
+  const [autoTranslateEn, setAutoTranslateEn] = useState(true);
+  const [translatingField, setTranslatingField] = useState<string | null>(null);
   const [modalTab, setModalTab] = useState<"general" | "architecture">("general");
   const [showInnerPreview, setShowInnerPreview] = useState(false);
+
+  const handleFieldTranslate = async (
+    fieldKey: string,
+    text: string,
+    setter: (translated: string) => void
+  ) => {
+    if (!text.trim() || translatingField) return;
+    setTranslatingField(fieldKey);
+    try {
+      const res = await translateIdToEn(text);
+      if (res) setter(res);
+    } catch (err) {
+      console.error("Translation error:", err);
+    } finally {
+      setTranslatingField(null);
+    }
+  };
 
   const updateMetricVal = (index: number, val: string) => {
     const updated = [...(formData.metrics || [])];
@@ -3310,7 +4054,7 @@ function ProjectFormModal({
         ...updated[index],
         lbl: {
           id: lang === "id" ? text : updated[index].lbl.id,
-          en: lang === "en" ? text : (autoSyncEn ? text : updated[index].lbl.en),
+          en: lang === "en" ? text : updated[index].lbl.en,
         },
       };
       setFormData({ ...formData, metrics: updated });
@@ -3411,16 +4155,16 @@ function ProjectFormModal({
 
           <button
             type="button"
-            onClick={() => setAutoSyncEn(!autoSyncEn)}
+            onClick={() => setAutoTranslateEn(!autoTranslateEn)}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              autoSyncEn
+              autoTranslateEn
                 ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
                 : "bg-zinc-800 text-zinc-400 border border-zinc-700"
             }`}
-            title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+            title="Bila aktif, mengisi Bahasa Indonesia akan otomatis menerjemahkan ke Bahasa Inggris"
           >
-            <Link2 className="w-3 h-3" />
-            <span>{autoSyncEn ? "Auto-sync EN Aktif" : "Auto-sync EN Mati"}</span>
+            <Sparkles className="w-3 h-3 text-indigo-400" />
+            <span>{autoTranslateEn ? "Auto-Translate EN Aktif" : "Auto-Translate EN Mati"}</span>
           </button>
         </div>
 
@@ -3557,10 +4301,25 @@ function ProjectFormModal({
                     setFormData((prev) => ({
                       ...prev,
                       summary: {
+                        ...prev.summary,
                         id: val,
-                        en: autoSyncEn ? val : prev.summary.en,
                       },
                     }));
+                  }}
+                  onBlur={() => {
+                    const idText = formData.summary.id.trim();
+                    if (
+                      autoTranslateEn &&
+                      idText &&
+                      (!formData.summary.en || formData.summary.en === formData.summary.id)
+                    ) {
+                      handleFieldTranslate("summary", idText, (translated) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          summary: { ...prev.summary, en: translated },
+                        }));
+                      });
+                    }
                   }}
                   placeholder="Deskripsi singkat yang tampil pada kartu proyek utama..."
                   className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
@@ -3568,9 +4327,22 @@ function ProjectFormModal({
               </div>
 
               <div>
-                <label className="block font-semibold text-zinc-300 mb-1">
-                  Project Summary (English) *
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block font-semibold text-zinc-300">
+                    Project Summary (English) *
+                  </label>
+                  <TranslateButton
+                    onClick={() =>
+                      handleFieldTranslate("summary", formData.summary.id, (translated) => {
+                        setFormData((prev) => ({
+                          ...prev,
+                          summary: { ...prev.summary, en: translated },
+                        }));
+                      })
+                    }
+                    isTranslating={translatingField === "summary"}
+                  />
+                </div>
                 <textarea
                   rows={2}
                   required
@@ -3681,11 +4453,30 @@ function ProjectFormModal({
                         details: {
                           ...prev.details,
                           architecture: {
+                            ...prev.details?.architecture,
                             id: val,
-                            en: autoSyncEn ? val : prev.details?.architecture?.en || "",
                           },
                         },
                       }));
+                    }}
+                    onBlur={() => {
+                      const idText = formData.details?.architecture?.id?.trim();
+                      if (
+                        autoTranslateEn &&
+                        idText &&
+                        (!formData.details?.architecture?.en ||
+                          formData.details?.architecture?.en === formData.details?.architecture?.id)
+                      ) {
+                        handleFieldTranslate("architecture", idText, (translated) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            details: {
+                              ...prev.details,
+                              architecture: { ...prev.details?.architecture, en: translated },
+                            },
+                          }));
+                        });
+                      }
                     }}
                     placeholder="Frontend dibangun menggunakan Next.js App Router dengan React Server Components. Backend diorkestrasikan melalui microservices Node.js, PostgreSQL dengan connection pooling, dan cluster Redis untuk analitik caching..."
                     className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-emerald-500 leading-relaxed text-xs"
@@ -3693,9 +4484,29 @@ function ProjectFormModal({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-zinc-300 mb-1">
-                    System Architecture (English) *
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-zinc-300">
+                      System Architecture (English) *
+                    </label>
+                    <TranslateButton
+                      onClick={() =>
+                        handleFieldTranslate(
+                          "architecture",
+                          formData.details?.architecture?.id || "",
+                          (translated) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              details: {
+                                ...prev.details,
+                                architecture: { ...prev.details?.architecture, en: translated },
+                              },
+                            }));
+                          }
+                        )
+                      }
+                      isTranslating={translatingField === "architecture"}
+                    />
+                  </div>
                   <textarea
                     rows={4}
                     value={formData.details?.architecture?.en || ""}
@@ -3741,11 +4552,30 @@ function ProjectFormModal({
                         details: {
                           ...prev.details,
                           overview: {
+                            ...prev.details?.overview,
                             id: val,
-                            en: autoSyncEn ? val : prev.details?.overview?.en || "",
                           },
                         },
                       }));
+                    }}
+                    onBlur={() => {
+                      const idText = formData.details?.overview?.id?.trim();
+                      if (
+                        autoTranslateEn &&
+                        idText &&
+                        (!formData.details?.overview?.en ||
+                          formData.details?.overview?.en === formData.details?.overview?.id)
+                      ) {
+                        handleFieldTranslate("overview", idText, (translated) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            details: {
+                              ...prev.details,
+                              overview: { ...prev.details?.overview, en: translated },
+                            },
+                          }));
+                        });
+                      }
                     }}
                     placeholder="Latar belakang masalah dan tujuan rekayasa proyek..."
                     className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500 leading-relaxed text-xs"
@@ -3753,9 +4583,29 @@ function ProjectFormModal({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-zinc-300 mb-1">
-                    Project Overview (English)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-zinc-300">
+                      Project Overview (English)
+                    </label>
+                    <TranslateButton
+                      onClick={() =>
+                        handleFieldTranslate(
+                          "overview",
+                          formData.details?.overview?.id || "",
+                          (translated) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              details: {
+                                ...prev.details,
+                                overview: { ...prev.details?.overview, en: translated },
+                              },
+                            }));
+                          }
+                        )
+                      }
+                      isTranslating={translatingField === "overview"}
+                    />
+                  </div>
                   <textarea
                     rows={3}
                     value={formData.details?.overview?.en || ""}
@@ -3801,11 +4651,30 @@ function ProjectFormModal({
                         details: {
                           ...prev.details,
                           challengesSolved: {
+                            ...prev.details?.challengesSolved,
                             id: val,
-                            en: autoSyncEn ? val : prev.details?.challengesSolved?.en || "",
                           },
                         },
                       }));
+                    }}
+                    onBlur={() => {
+                      const idText = formData.details?.challengesSolved?.id?.trim();
+                      if (
+                        autoTranslateEn &&
+                        idText &&
+                        (!formData.details?.challengesSolved?.en ||
+                          formData.details?.challengesSolved?.en === formData.details?.challengesSolved?.id)
+                      ) {
+                        handleFieldTranslate("challengesSolved", idText, (translated) => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            details: {
+                              ...prev.details,
+                              challengesSolved: { ...prev.details?.challengesSolved, en: translated },
+                            },
+                          }));
+                        });
+                      }
                     }}
                     placeholder="Tantangan utama adalah menangani lonjakan query agregasi di bawah beban tinggi. Solusinya diatasi dengan partisi tabel PostgreSQL dan worker queue Redis..."
                     className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-amber-500 leading-relaxed text-xs"
@@ -3813,9 +4682,29 @@ function ProjectFormModal({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-zinc-300 mb-1">
-                    Challenge &amp; Solution (English)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block font-semibold text-zinc-300">
+                      Challenge &amp; Solution (English)
+                    </label>
+                    <TranslateButton
+                      onClick={() =>
+                        handleFieldTranslate(
+                          "challengesSolved",
+                          formData.details?.challengesSolved?.id || "",
+                          (translated) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              details: {
+                                ...prev.details,
+                                challengesSolved: { ...prev.details?.challengesSolved, en: translated },
+                              },
+                            }));
+                          }
+                        )
+                      }
+                      isTranslating={translatingField === "challengesSolved"}
+                    />
+                  </div>
                   <textarea
                     rows={3}
                     value={formData.details?.challengesSolved?.en || ""}
@@ -3858,11 +4747,15 @@ function ProjectFormModal({
                     <textarea
                       rows={4}
                       value={highlightsInputId}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setHighlightsInputId(val);
-                        if (autoSyncEn) {
-                          setHighlightsInputEn(val);
+                      onChange={(e) => setHighlightsInputId(e.target.value)}
+                      onBlur={() => {
+                        const idText = highlightsInputId.trim();
+                        if (
+                          autoTranslateEn &&
+                          idText &&
+                          (!highlightsInputEn || highlightsInputEn === highlightsInputId)
+                        ) {
+                          handleFieldTranslate("highlights", idText, setHighlightsInputEn);
                         }
                       }}
                       placeholder={"Autentikasi multi-tenant dengan JWT dan RBAC\nSinkronisasi WebSocket dan Server-Sent Events\nDukungan multi-mata uang dan webhook pembayaran"}
@@ -3871,9 +4764,17 @@ function ProjectFormModal({
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-zinc-300 mb-1">
-                      Highlights (English)
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block font-semibold text-zinc-300">
+                        Highlights (English)
+                      </label>
+                      <TranslateButton
+                        onClick={() =>
+                          handleFieldTranslate("highlights", highlightsInputId, setHighlightsInputEn)
+                        }
+                        isTranslating={translatingField === "highlights"}
+                      />
+                    </div>
                     <textarea
                       rows={4}
                       value={highlightsInputEn}
@@ -3933,15 +4834,38 @@ function ProjectFormModal({
                           type="text"
                           value={m.lbl.id}
                           onChange={(e) => updateMetricLbl(mIdx, "id", e.target.value)}
+                          onBlur={() => {
+                            const idText = m.lbl?.id?.trim();
+                            if (
+                              autoTranslateEn &&
+                              idText &&
+                              (!m.lbl?.en || m.lbl?.en === m.lbl?.id)
+                            ) {
+                              handleFieldTranslate(`metric.${mIdx}`, idText, (trans) => {
+                                updateMetricLbl(mIdx, "en", trans);
+                              });
+                            }
+                          }}
                           placeholder="mis. Latensi API"
                           className="w-full px-2.5 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-white outline-none"
                         />
                       </div>
 
                       <div className="flex-1">
-                        <label className="block text-[10px] text-zinc-400 font-semibold mb-0.5">
-                          Label (EN)
-                        </label>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <label className="block text-[10px] text-zinc-400 font-semibold">
+                            Label (EN)
+                          </label>
+                          <TranslateButton
+                            onClick={() =>
+                              handleFieldTranslate(`metric.${mIdx}`, m.lbl?.id || "", (trans) => {
+                                updateMetricLbl(mIdx, "en", trans);
+                              })
+                            }
+                            isTranslating={translatingField === `metric.${mIdx}`}
+                            label="EN"
+                          />
+                        </div>
                         <input
                           type="text"
                           value={m.lbl.en}
@@ -4076,7 +5000,25 @@ function SkillFormModal({
         }
   );
 
-  const [autoSyncEn, setAutoSyncEn] = useState(true);
+  const [autoTranslateEn, setAutoTranslateEn] = useState(true);
+  const [translatingField, setTranslatingField] = useState<string | null>(null);
+
+  const handleFieldTranslate = async (
+    fieldKey: string,
+    text: string,
+    setter: (translated: string) => void
+  ) => {
+    if (!text.trim() || translatingField) return;
+    setTranslatingField(fieldKey);
+    try {
+      const res = await translateIdToEn(text);
+      if (res) setter(res);
+    } catch (err) {
+      console.error("Translation error:", err);
+    } finally {
+      setTranslatingField(null);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -4240,16 +5182,16 @@ function SkillFormModal({
               </label>
               <button
                 type="button"
-                onClick={() => setAutoSyncEn(!autoSyncEn)}
+                onClick={() => setAutoTranslateEn(!autoTranslateEn)}
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                  autoSyncEn
+                  autoTranslateEn
                     ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                     : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                 }`}
-                title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+                title="Bila aktif, mengisi Bahasa Indonesia akan otomatis menerjemahkan ke Bahasa Inggris"
               >
-                <Link2 className="w-2.5 h-2.5" />
-                <span>{autoSyncEn ? "Auto-sync EN aktif" : "Auto-sync EN mati"}</span>
+                <Sparkles className="w-2.5 h-2.5 text-emerald-400" />
+                <span>{autoTranslateEn ? "Auto-Translate EN aktif" : "Auto-Translate EN mati"}</span>
               </button>
             </div>
             <input
@@ -4260,19 +5202,47 @@ function SkillFormModal({
                 setFormData((prev) => ({
                   ...prev,
                   desc: {
+                    ...prev.desc,
                     id: val,
-                    en: autoSyncEn ? val : prev.desc.en,
                   },
                 }));
+              }}
+              onBlur={() => {
+                const idText = formData.desc.id.trim();
+                if (
+                  autoTranslateEn &&
+                  idText &&
+                  (!formData.desc.en || formData.desc.en === formData.desc.id)
+                ) {
+                  handleFieldTranslate("desc", idText, (translated) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      desc: { ...prev.desc, en: translated },
+                    }));
+                  });
+                }
               }}
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-emerald-500"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Short Description (English)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-semibold text-zinc-300">
+                Short Description (English)
+              </label>
+              <TranslateButton
+                onClick={() =>
+                  handleFieldTranslate("desc", formData.desc.id, (translated) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      desc: { ...prev.desc, en: translated },
+                    }));
+                  })
+                }
+                isTranslating={translatingField === "desc"}
+              />
+            </div>
             <input
               type="text"
               value={formData.desc.en}
@@ -4335,7 +5305,25 @@ function TimelineFormModal({
   const [skillsInput, setSkillsInput] = useState(
     formData.skills?.join(", ") || ""
   );
-  const [autoSyncEn, setAutoSyncEn] = useState(true);
+  const [autoTranslateEn, setAutoTranslateEn] = useState(true);
+  const [translatingField, setTranslatingField] = useState<string | null>(null);
+
+  const handleFieldTranslate = async (
+    fieldKey: string,
+    text: string,
+    setter: (translated: string) => void
+  ) => {
+    if (!text.trim() || translatingField) return;
+    setTranslatingField(fieldKey);
+    try {
+      const res = await translateIdToEn(text);
+      if (res) setter(res);
+    } catch (err) {
+      console.error("Translation error:", err);
+    } finally {
+      setTranslatingField(null);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -4467,16 +5455,16 @@ function TimelineFormModal({
                 </label>
                 <button
                   type="button"
-                  onClick={() => setAutoSyncEn(!autoSyncEn)}
+                  onClick={() => setAutoTranslateEn(!autoTranslateEn)}
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors ${
-                    autoSyncEn
+                    autoTranslateEn
                       ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
                       : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                   }`}
-                  title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+                  title="Bila aktif, mengisi Bahasa Indonesia akan otomatis menerjemahkan ke Bahasa Inggris"
                 >
-                  <Link2 className="w-2.5 h-2.5" />
-                  <span>{autoSyncEn ? "Auto-sync" : "Manual"}</span>
+                  <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                  <span>{autoTranslateEn ? "Auto-EN" : "Manual"}</span>
                 </button>
               </div>
               <input
@@ -4488,10 +5476,25 @@ function TimelineFormModal({
                   setFormData((prev) => ({
                     ...prev,
                     role: {
+                      ...prev.role,
                       id: val,
-                      en: autoSyncEn ? val : prev.role.en,
                     },
                   }));
+                }}
+                onBlur={() => {
+                  const idText = formData.role.id.trim();
+                  if (
+                    autoTranslateEn &&
+                    idText &&
+                    (!formData.role.en || formData.role.en === formData.role.id)
+                  ) {
+                    handleFieldTranslate("role", idText, (translated) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        role: { ...prev.role, en: translated },
+                      }));
+                    });
+                  }
                 }}
                 placeholder="Senior Full-Stack Developer"
                 className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
@@ -4499,9 +5502,22 @@ function TimelineFormModal({
             </div>
 
             <div>
-              <label className="block font-semibold text-zinc-300 mb-1">
-                Role / Degree (EN) *
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block font-semibold text-zinc-300">
+                  Role / Degree (EN) *
+                </label>
+                <TranslateButton
+                  onClick={() =>
+                    handleFieldTranslate("role", formData.role.id, (translated) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        role: { ...prev.role, en: translated },
+                      }));
+                    })
+                  }
+                  isTranslating={translatingField === "role"}
+                />
+              </div>
               <input
                 type="text"
                 required
@@ -4519,16 +5535,9 @@ function TimelineFormModal({
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="font-semibold text-zinc-300">
-                Deskripsi Tanggung Jawab &amp; Dampak (ID)
-              </label>
-              {autoSyncEn && (
-                <span className="text-[10px] text-indigo-400 font-medium">
-                  Auto-sync ke EN aktif
-                </span>
-              )}
-            </div>
+            <label className="block font-semibold text-zinc-300 mb-1">
+              Deskripsi Tanggung Jawab &amp; Dampak (ID)
+            </label>
             <textarea
               rows={2}
               value={formData.description.id}
@@ -4537,19 +5546,48 @@ function TimelineFormModal({
                 setFormData((prev) => ({
                   ...prev,
                   description: {
+                    ...prev.description,
                     id: val,
-                    en: autoSyncEn ? val : prev.description.en,
                   },
                 }));
               }}
+              onBlur={() => {
+                const idText = formData.description.id.trim();
+                if (
+                  autoTranslateEn &&
+                  idText &&
+                  (!formData.description.en || formData.description.en === formData.description.id)
+                ) {
+                  handleFieldTranslate("description", idText, (translated) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: { ...prev.description, en: translated },
+                    }));
+                  });
+                }
+              }}
+              placeholder="Jelaskan peran teknis dan pencapaian Anda..."
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
             />
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Description &amp; Impact (EN)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-semibold text-zinc-300">
+                Description &amp; Impact (EN)
+              </label>
+              <TranslateButton
+                onClick={() =>
+                  handleFieldTranslate("description", formData.description.id, (translated) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: { ...prev.description, en: translated },
+                    }));
+                  })
+                }
+                isTranslating={translatingField === "description"}
+              />
+            </div>
             <textarea
               rows={2}
               value={formData.description.en}
@@ -4559,6 +5597,7 @@ function TimelineFormModal({
                   description: { ...formData.description, en: e.target.value },
                 })
               }
+              placeholder="Describe your technical responsibilities and impact..."
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500"
             />
           </div>
@@ -4622,7 +5661,25 @@ function TestimonialFormModal({
         }
   );
 
-  const [autoSyncEn, setAutoSyncEn] = useState(true);
+  const [autoTranslateEn, setAutoTranslateEn] = useState(true);
+  const [translatingField, setTranslatingField] = useState<string | null>(null);
+
+  const handleFieldTranslate = async (
+    fieldKey: string,
+    text: string,
+    setter: (translated: string) => void
+  ) => {
+    if (!text.trim() || translatingField) return;
+    setTranslatingField(fieldKey);
+    try {
+      const res = await translateIdToEn(text);
+      if (res) setter(res);
+    } catch (err) {
+      console.error("Translation error:", err);
+    } finally {
+      setTranslatingField(null);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -4761,16 +5818,16 @@ function TestimonialFormModal({
               </label>
               <button
                 type="button"
-                onClick={() => setAutoSyncEn(!autoSyncEn)}
+                onClick={() => setAutoTranslateEn(!autoTranslateEn)}
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                  autoSyncEn
+                  autoTranslateEn
                     ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
                     : "bg-zinc-800 text-zinc-400 border border-zinc-700"
                 }`}
-                title="Bila aktif, mengetik Bahasa Indonesia otomatis menyalin ke Bahasa Inggris"
+                title="Bila aktif, mengisi Bahasa Indonesia akan otomatis menerjemahkan ke Bahasa Inggris"
               >
-                <Link2 className="w-2.5 h-2.5" />
-                <span>{autoSyncEn ? "Auto-sync EN aktif" : "Auto-sync EN mati"}</span>
+                <Sparkles className="w-2.5 h-2.5 text-indigo-400" />
+                <span>{autoTranslateEn ? "Auto-Translate EN aktif" : "Auto-Translate EN mati"}</span>
               </button>
             </div>
             <textarea
@@ -4782,10 +5839,25 @@ function TestimonialFormModal({
                 setFormData((prev) => ({
                   ...prev,
                   quote: {
+                    ...prev.quote,
                     id: val,
-                    en: autoSyncEn ? val : prev.quote.en,
                   },
                 }));
+              }}
+              onBlur={() => {
+                const idText = formData.quote.id.trim();
+                if (
+                  autoTranslateEn &&
+                  idText &&
+                  (!formData.quote.en || formData.quote.en === formData.quote.id)
+                ) {
+                  handleFieldTranslate("quote", idText, (translated) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      quote: { ...prev.quote, en: translated },
+                    }));
+                  });
+                }
               }}
               placeholder="Tuliskan ulasan atau rekomendasi rekan dalam Bahasa Indonesia..."
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500 leading-relaxed"
@@ -4793,9 +5865,22 @@ function TestimonialFormModal({
           </div>
 
           <div>
-            <label className="block font-semibold text-zinc-300 mb-1">
-              Testimonial / Endorsement (English)
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block font-semibold text-zinc-300">
+                Testimonial / Endorsement (English)
+              </label>
+              <TranslateButton
+                onClick={() =>
+                  handleFieldTranslate("quote", formData.quote.id, (translated) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      quote: { ...prev.quote, en: translated },
+                    }));
+                  })
+                }
+                isTranslating={translatingField === "quote"}
+              />
+            </div>
             <textarea
               rows={3}
               value={formData.quote.en}
@@ -4805,7 +5890,7 @@ function TestimonialFormModal({
                   quote: { ...formData.quote, en: e.target.value },
                 })
               }
-              placeholder="Opsional (akan menggunakan versi ID jika dikosongkan)..."
+              placeholder="Optional english translation..."
               className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-800 text-white outline-none focus:border-indigo-500 leading-relaxed"
             />
           </div>

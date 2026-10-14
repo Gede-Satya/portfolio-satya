@@ -26,6 +26,13 @@ export function PortfolioView({ initialData }: PortfolioViewProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [portfolioData, setPortfolioData] = useState<PortfolioContent>(initialData);
 
+  // Sync when initialData changes from dynamic server render
+  useEffect(() => {
+    if (initialData) {
+      setPortfolioData(initialData);
+    }
+  }, [initialData]);
+
   // Initialize theme, language, and background sync CMS data
   useEffect(() => {
     // Theme

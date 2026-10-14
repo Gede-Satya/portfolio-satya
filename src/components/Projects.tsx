@@ -75,18 +75,20 @@ export const Projects: React.FC<ProjectsProps> = ({ lang, projects }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {filteredProjects.map((project: ProjectItem) => (
+            {filteredProjects.map((project: ProjectItem, idx: number) => (
             <article
-              key={project.id}
+              key={`${project.id}-${project.image}`}
               className="rounded-3xl glass-panel overflow-hidden border border-zinc-200/80 dark:border-zinc-800 flex flex-col justify-between hover:border-zinc-300 dark:hover:border-zinc-700 transition-all duration-300 group"
             >
               <div>
                 {/* Project Image Box */}
                 <div className="relative aspect-[16/10] w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200/60 dark:border-zinc-800/60">
                   <Image
+                    key={project.image}
                     src={project.image}
                     alt={project.title}
                     fill
+                    priority={idx < 2}
                     sizes="(max-width: 768px) 100vw, 600px"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />

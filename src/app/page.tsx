@@ -1,7 +1,10 @@
-import { getPortfolioContent } from "@/lib/storage";
+import { getPortfolioContentAsync } from "@/lib/storage";
 import { PortfolioView } from "@/components/PortfolioView";
 
-export default function Home() {
-  const initialData = getPortfolioContent();
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function Home() {
+  const initialData = await getPortfolioContentAsync();
   return <PortfolioView initialData={initialData} />;
 }
