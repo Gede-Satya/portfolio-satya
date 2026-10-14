@@ -148,6 +148,7 @@ export function PortfolioView({ initialData }: PortfolioViewProps) {
         <Testimonials
           lang={lang}
           testimonials={portfolioData.testimonials}
+          onShowToast={showToast}
         />
         <Contact
           lang={lang}

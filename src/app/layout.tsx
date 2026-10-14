@@ -115,6 +115,16 @@ export const metadata: Metadata = {
       "Portofolio Personal Gede Satya Budi Dharma Wiguna - Web Developer spesialisasi dalam aplikasi web modern, Next.js, TypeScript, dan UI/UX.",
     images: ["/uploads/foto_wasit_satya-1791865121487.png"],
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   category: "portfolio",
 };
 

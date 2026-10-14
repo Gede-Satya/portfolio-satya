@@ -361,38 +361,7 @@ export const timelineData: TimelineItem[] = [
   },
 ];
 
-export const testimonialsData: TestimonialItem[] = [
-  {
-    id: "testi-1",
-    quote: {
-      id: "Alex memiliki keahlian langka: sangat teliti pada ketahanan arsitektur backend dan efisiensi basis data, namun tetap memiliki cita rasa estetika tinggi dalam menyajikan UI/UX modern yang memikat pengguna.",
-      en: "Alex possesses a rare blend: rigorously detail-oriented on backend architecture and database efficiency, yet equipped with sharp aesthetic intuition for delivering breathtaking, responsive UI/UX.",
-    },
-    author: "Budi Hartono",
-    role: "VP of Engineering @ TechScale Labs",
-    initials: "BH",
-  },
-  {
-    id: "testi-2",
-    quote: {
-      id: "Kecepatan delivery dan kebersihan kode Alex sangat luar biasa. Proyek SaaS kami rilis 2 minggu lebih cepat dari target berkat pemisahan modul yang rapi dan dokumentasi API yang jelas.",
-      en: "Alex's speed of execution and code clarity are truly exceptional. Our core SaaS product shipped 2 weeks ahead of schedule thanks to clean modular boundaries and solid API specs.",
-    },
-    author: "Sarah Lestari",
-    role: "Product Lead @ Innovate Studio",
-    initials: "SL",
-  },
-  {
-    id: "testi-3",
-    quote: {
-      id: "Komunikatif, solutif, dan selalu memegang teguh standar best practice. Alex adalah tipe rekan insinyur yang membuat seluruh tim merasa percaya diri saat melakukan rilis ke tahap produksi.",
-      en: "Communicative, solution-oriented, and relentlessly committed to engineering excellence. Alex is the teammate that brings calmness and confidence whenever pushing releases to production.",
-    },
-    author: "Michael Ryan",
-    role: "Principal Software Architect",
-    initials: "MR",
-  },
-];
+export const testimonialsData: TestimonialItem[] = [];
 
 export const terminalCommands: Record<string, { id: string; en: string }> = {
   help: {

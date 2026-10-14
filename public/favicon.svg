@@ -1,0 +1,159 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141724" />
+      <stop offset="50%" stop-color="#0d0f17" />
+      <stop offset="100%" stop-color="#07080d" />
+    </linearGradient>
+
+    <!-- Border Glow Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.6" />
+      <stop offset="35%" stop-color="#818cf8" stop-opacity="0.3" />
+      <stop offset="70%" stop-color="#c084fc" stop-opacity="0.2" />
+      <stop offset="100%" stop-color="#fb7185" stop-opacity="0.5" />
+    </linearGradient>
+
+    <!-- Upper Ribbon Outer Gradient (Cyan to Blue to Purple) -->
+    <linearGradient id="upperRibbonGrad" x1="10%" y1="10%" x2="80%" y2="80%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="30%" stop-color="#0ea5e9" />
+      <stop offset="65%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#8b5cf6" />
+    </linearGradient>
+
+    <!-- Upper Loop Inner Underfold -->
+    <linearGradient id="upperInnerFold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="60%" stop-color="#1e1b4b" />
+      <stop offset="100%" stop-color="#312e81" />
+    </linearGradient>
+
+    <!-- Lower Ribbon Gradient (Violet to Magenta to Coral to Amber) -->
+    <linearGradient id="lowerRibbonGrad" x1="20%" y1="20%" x2="90%" y2="90%">
+      <stop offset="0%" stop-color="#8b5cf6" />
+      <stop offset="30%" stop-color="#c026d3" />
+      <stop offset="70%" stop-color="#f43f5e" />
+      <stop offset="100%" stop-color="#fb923c" />
+    </linearGradient>
+
+    <!-- Lower Loop Inner Fold -->
+    <linearGradient id="lowerInnerFold" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4c1d95" />
+      <stop offset="60%" stop-color="#701a75" />
+      <stop offset="100%" stop-color="#4c0519" />
+    </linearGradient>
+
+    <!-- Highlights -->
+    <linearGradient id="cyanHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.95" />
+      <stop offset="50%" stop-color="#7dd3fc" stop-opacity="0.5" />
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0" />
+    </linearGradient>
+
+    <linearGradient id="peachHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="40%" stop-color="#fed7aa" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Ambient Shadow & Glow -->
+    <filter id="shadowFilter" x="-20%" y="-20%" width="150%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity="0.7" />
+    </filter>
+
+    <filter id="cyanGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="40" />
+    </filter>
+
+    <filter id="peachGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="40" />
+    </filter>
+  </defs>
+
+  <!-- Dark Squircle Canvas -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGrad)" />
+  <rect x="17" y="17" width="478" height="478" rx="111" fill="none" stroke="url(#borderGrad)" stroke-width="3" />
+
+  <!-- Background Ambient Glow Nodes -->
+  <circle cx="170" cy="170" r="95" fill="#0284c7" opacity="0.28" filter="url(#cyanGlow)" />
+  <circle cx="340" cy="340" r="95" fill="#f43f5e" opacity="0.25" filter="url(#peachGlow)" />
+
+  <!-- 3D Ribbon S-Curve Geometry -->
+  <g filter="url(#shadowFilter)">
+
+    <!-- 1. Lower Ribbon Inner Fold / Backside -->
+    <path d="M 230 255 
+             C 270 300, 310 330, 310 365 
+             C 310 395, 285 415, 255 415 
+             C 225 415, 205 398, 195 380 
+             L 160 405 
+             C 180 435, 215 455, 256 455 
+             C 310 455, 355 420, 355 365 
+             C 355 315, 305 275, 260 230 
+             Z" 
+          fill="url(#lowerInnerFold)" opacity="0.75" />
+
+    <!-- 2. Lower Ribbon Main Swatch (Sweeps smoothly down to right, curves round, points up-left) -->
+    <path d="M 255 235
+             C 298 280, 356 315, 356 368
+             C 356 422, 312 455, 256 455
+             C 196 455, 150 415, 140 360
+             L 194 346
+             C 202 382, 224 408, 256 408
+             C 285 408, 304 390, 304 366
+             C 304 332, 266 300, 222 255
+             Z"
+          fill="url(#lowerRibbonGrad)" />
+
+    <!-- 3. Upper Ribbon Inner Fold / Backside -->
+    <path d="M 282 255 
+             C 242 210, 202 180, 202 145 
+             C 202 115, 225 95, 255 95 
+             C 285 95, 305 112, 315 130 
+             L 350 105 
+             C 330 75, 295 55, 255 55 
+             C 200 55, 155 90, 155 145 
+             C 155 195, 205 235, 250 280 
+             Z" 
+          fill="url(#upperInnerFold)" opacity="0.8" />
+
+    <!-- 4. Upper Ribbon Main Swatch (Sweeps from left, curves over top, swoops across middle) -->
+    <path d="M 155 145
+             C 155 88, 200 55, 256 55
+             C 316 55, 362 95, 372 152
+             L 318 166
+             C 310 130, 288 102, 256 102
+             C 226 102, 206 122, 206 146
+             C 206 180, 244 212, 290 258
+             L 245 300
+             C 200 252, 155 210, 155 145
+             Z"
+          fill="url(#upperRibbonGrad)" />
+
+    <!-- 5. Intersecting Ribbon Cast Shadow for Depth -->
+    <path d="M 230 240 C 255 270, 275 290, 305 320 L 280 345 C 250 315, 230 285, 210 255 Z" 
+          fill="#05060a" opacity="0.55" />
+
+    <!-- 6. Polished Specular Highlights -->
+    <!-- Top outer crest highlight -->
+    <path d="M 175 125
+             C 192 82, 222 62, 256 62
+             C 292 62, 335 85, 355 130"
+          fill="none" stroke="url(#cyanHighlight)" stroke-width="5" stroke-linecap="round" opacity="0.9" />
+
+    <!-- Bottom outer crest highlight -->
+    <path d="M 338 385
+             C 320 425, 290 448, 256 448
+             C 220 448, 178 425, 158 380"
+          fill="none" stroke="url(#peachHighlight)" stroke-width="5" stroke-linecap="round" opacity="0.85" />
+
+    <!-- Inner subtle light rim on waist -->
+    <path d="M 218 152 C 220 188, 248 218, 282 252"
+          fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.4" />
+    <path d="M 292 360 C 290 324, 262 294, 228 260"
+          fill="none" stroke="#fed7aa" stroke-width="2" stroke-linecap="round" opacity="0.45" />
+
+  </g>
+</svg>

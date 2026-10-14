@@ -53,6 +53,12 @@ export async function POST(request: Request) {
       newItem.quote.id = newItem.quote.en;
     }
 
+    const rawRating = Number(newItem.rating);
+    newItem.rating = !isNaN(rawRating) ? Math.min(5, Math.max(1, Math.round(rawRating))) : 5;
+    newItem.createdAt = newItem.createdAt || new Date().toISOString();
+    newItem.role = newItem.role?.trim() || "Rekan Kolaborasi";
+    newItem.visible = newItem.visible !== false;
+
     content.testimonials = [newItem, ...(content.testimonials || [])];
     await savePortfolioContentAsync(content);
 

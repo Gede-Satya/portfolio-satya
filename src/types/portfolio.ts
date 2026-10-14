@@ -55,5 +55,7 @@ export interface TestimonialItem {
   author: string;
   role: string;
   initials: string;
+  rating?: number;
+  createdAt?: string;
   visible?: boolean;
 }

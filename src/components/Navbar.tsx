@@ -52,6 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { href: "#skills", label: lang === "id" ? "Keahlian" : "Skills" },
     { href: "#projects", label: lang === "id" ? "Proyek" : "Projects" },
     { href: "#experience", label: lang === "id" ? "Pengalaman" : "Experience" },
+    { href: "#testimonials", label: lang === "id" ? "Ulasan" : "Reviews" },
     { href: "#terminal", label: lang === "id" ? "Terminal" : "Terminal" },
     { href: "#contact", label: lang === "id" ? "Kontak" : "Contact" },
   ];
@@ -97,9 +98,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="flex items-center gap-2.5 group"
             aria-label={`${name} Home`}
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 text-white flex items-center justify-center font-bold text-sm shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              {initials}
-            </div>
+            <img
+              src="/icon.png"
+              alt={`${name} Logo`}
+              width={36}
+              height={36}
+              className="w-9 h-9 rounded-xl object-contain shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform"
+            />
             <div className="flex flex-col">
               <span className="font-bold text-sm tracking-tight text-zinc-900 dark:text-white">
                 {name}

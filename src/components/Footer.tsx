@@ -41,9 +41,13 @@ export const Footer: React.FC<FooterProps> = ({ lang, profile }) => {
         {/* Brand & tagline */}
         <div className="flex flex-col items-center md:items-start gap-1">
           <div className="flex items-center gap-2">
-            <span className="w-6 h-6 rounded-md bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">
-              {initials}
-            </span>
+            <img
+              src="/icon.png"
+              alt={name}
+              width={24}
+              height={24}
+              className="w-6 h-6 rounded-md object-contain"
+            />
             <span className="font-bold text-sm text-zinc-900 dark:text-white">
               {name}
             </span>

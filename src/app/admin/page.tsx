@@ -3569,7 +3569,14 @@ export default function AdminDashboardPage() {
                           <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-1 text-amber-400">
                               {[...Array(5)].map((_, i) => (
-                                <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
+                                <Star
+                                  key={i}
+                                  className={`w-3.5 h-3.5 ${
+                                    i < (item.rating || 5)
+                                      ? "fill-amber-400 text-amber-400"
+                                      : "text-zinc-700"
+                                  }`}
+                                />
                               ))}
                             </div>
                             <div className="flex items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
