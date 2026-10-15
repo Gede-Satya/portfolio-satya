@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { ArrowRight, Mail, Check, Terminal, ExternalLink } from "lucide-react";
+import { ArrowRight, Mail, Check, Terminal, ExternalLink, FileDown } from "lucide-react";
 import { GithubIcon, LinkedinIcon } from "./Icons";
 import { Language } from "@/types/portfolio";
 import { siteConfig } from "@/data/portfolioData";
@@ -119,6 +119,21 @@ export const Hero: React.FC<HeroProps> = ({
               >
                 <span>{lang === "id" ? "Diskusi Proyek" : "Discuss Project"}</span>
               </a>
+
+              {/* Unduh CV / Resume Button */}
+              {profile?.cvUrl && profile?.showCvButton !== false && (
+                <a
+                  href={profile.cvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={profile.name ? `CV_${profile.name.replace(/\s+/g, "_")}.pdf` : "CV_Satya_Dharma.pdf"}
+                  className="inline-flex items-center gap-2 px-5 py-3 rounded-xl border border-indigo-500/40 bg-indigo-50/90 hover:bg-indigo-100 dark:bg-indigo-950/40 dark:hover:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-semibold text-sm shadow-sm transition-all hover:scale-[1.02] group"
+                  title={lang === "id" ? "Unduh Curriculum Vitae (PDF)" : "Download Curriculum Vitae (PDF)"}
+                >
+                  <FileDown className="w-4 h-4 text-indigo-600 dark:text-indigo-400 group-hover:translate-y-0.5 transition-transform" />
+                  <span>{lang === "id" ? "Unduh CV" : "Download CV"}</span>
+                </a>
+              )}
 
               <a
                 href="#terminal"

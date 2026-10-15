@@ -15,28 +15,42 @@ export async function POST(request: Request) {
       );
     }
 
-    // Validasi format file gambar
-    const validTypes = [
+    // Validasi format file gambar & dokumen (CV / Resume)
+    const validImageTypes = [
       "image/jpeg",
       "image/png",
       "image/webp",
       "image/gif",
       "image/svg+xml",
     ];
-    if (!validTypes.includes(file.type)) {
+    const validDocTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/octet-stream",
+    ];
+
+    const ext = path.extname(file.name).toLowerCase() || (file.type === "application/pdf" ? ".pdf" : ".jpg");
+    const isDocExtension = [".pdf", ".doc", ".docx"].includes(ext);
+    const isImageExtension = [".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"].includes(ext);
+
+    const isImage = validImageTypes.includes(file.type) || isImageExtension;
+    const isDoc = validDocTypes.includes(file.type) || isDocExtension;
+
+    if (!isImage && !isDoc) {
       return NextResponse.json(
         {
           success: false,
-          message: "Format file tidak didukung. Gunakan JPG, PNG, WebP, GIF, atau SVG.",
+          message: "Format file tidak didukung. Gunakan JPG, PNG, WebP, SVG, PDF, atau DOCX.",
         },
         { status: 400 }
       );
     }
 
-    // Batasi ukuran maksimal 5MB
-    if (file.size > 5 * 1024 * 1024) {
+    // Batasi ukuran maksimal 15MB untuk gambar & dokumen
+    if (file.size > 15 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, message: "Ukuran file terlalu besar (maksimal 5MB)." },
+        { success: false, message: "Ukuran file terlalu besar (maksimal 15MB)." },
         { status: 400 }
       );
     }
@@ -45,7 +59,6 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(bytes);
 
     // Sanitasi nama file & tambahkan timestamp unik
-    const ext = path.extname(file.name) || ".jpg";
     const baseName = path
       .basename(file.name, ext)
       .replace(/[^a-zA-Z0-9_-]/g, "_");

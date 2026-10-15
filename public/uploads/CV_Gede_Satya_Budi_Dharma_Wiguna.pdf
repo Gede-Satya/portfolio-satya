@@ -1,0 +1,111 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Length 2027 >>
+stream
+BT
+/F1 22 Tf
+50 780 Td
+(GEDE SATYA BUDI DHARMA WIGUNA) Tj
+/F2 12 Tf
+0 -25 Td
+(Web Developer | Next.js, TypeScript & Full-Stack Specialist) Tj
+0 -18 Td
+(Email: satyadharma1609@gmail.com | Phone: 0895394043443 | Location: Bali, Indonesia) Tj
+0 -15 Td
+(Website: https://portfolio-satya-five.vercel.app | GitHub: github.com | LinkedIn: linkedin.com) Tj
+
+0 -30 Td
+/F1 14 Tf
+(RINGKASAN PROFESIONAL) Tj
+0 -18 Td
+/F2 10 Tf
+(Full-Stack Web Developer dengan lebih dari 4 tahun pengalaman membangun sistem digital modern.) Tj
+0 -14 Td
+(Keahlian mendalam dalam Next.js, React, Node.js, TypeScript, REST APIs, dan PostgreSQL.) Tj
+
+0 -30 Td
+/F1 14 Tf
+(KEAHLIAN UTAMA) Tj
+0 -18 Td
+/F2 10 Tf
+(- Frontend: Next.js 14, React.js, TypeScript, Tailwind CSS, HTML5, CSS3/Sass, UI/UX) Tj
+0 -14 Td
+(- Backend & Database: Node.js, Express, Golang, REST API, PostgreSQL, Redis, Supabase) Tj
+0 -14 Td
+(- Tools & DevOps: Git, GitHub Actions CI/CD, Docker, Vercel, Figma, Web Vitals Optimization) Tj
+
+0 -30 Td
+/F1 14 Tf
+(PENGALAMAN KERJA) Tj
+0 -18 Td
+/F1 11 Tf
+(Senior Full-Stack Engineer - TechScale Labs) Tj
+0 -14 Td
+/F2 10 Tf
+(2023 - Sekarang | Jakarta / Hybrid) Tj
+0 -14 Td
+(- Merancang arsitektur web analitik SaaS multi-tenant berbasis Next.js dan Golang.) Tj
+0 -14 Td
+(- Memangkas waktu muat halaman hingga 40% dan mengorkestrasi CI/CD zero-downtime.) Tj
+
+0 -22 Td
+/F1 11 Tf
+(Full-Stack Web Developer - Innovate Digital Studio) Tj
+0 -14 Td
+/F2 10 Tf
+(2021 - 2023 | Jakarta) Tj
+0 -14 Td
+(- Membangun 12+ aplikasi web enterprise untuk fintech, e-commerce, dan startup.) Tj
+0 -14 Td
+(- Integrasi payment gateway Stripe & Midtrans serta arsitektur caching Redis.) Tj
+
+0 -22 Td
+/F1 11 Tf
+(Frontend Web Developer - Nusantara Creative Agency) Tj
+0 -14 Td
+/F2 10 Tf
+(2020 - 2021 | Bandung) Tj
+0 -14 Td
+(- Mengembangkan landing page interaktif pixel-perfect dengan skor Lighthouse 95+.) Tj
+
+0 -30 Td
+/F1 14 Tf
+(PENDIDIKAN) Tj
+0 -18 Td
+/F1 11 Tf
+(Sarjana Komputer - S.Kom Ilmu Komputer) Tj
+0 -14 Td
+/F2 10 Tf
+(Universitas Indonesia UI | IPK 3.82 / 4.00) Tj
+ET
+endstream
+endobj
+xref
+0 7
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000249 00000 n 
+0000000326 00000 n 
+0000000398 00000 n 
+trailer
+<< /Size 7 /Root 1 0 R >>
+startxref
+2497
+%%EOF

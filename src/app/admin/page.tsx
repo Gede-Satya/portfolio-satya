@@ -43,6 +43,7 @@ import {
 import { ProjectItem, SkillItem, TimelineItem, TestimonialItem } from "@/types/portfolio";
 import { Toast } from "@/components/Toast";
 import { ImageUpload } from "@/components/ImageUpload";
+import { CvUpload } from "@/components/CvUpload";
 import { ProjectModal } from "@/components/ProjectModal";
 import { translateIdToEn } from "@/lib/translate";
 
@@ -1352,6 +1353,26 @@ export default function AdminDashboardPage() {
                       />
                     </div>
                   </div>
+                </div>
+
+                {/* Berkas Curriculum Vitae (CV / Resume) */}
+                <div className="p-6 rounded-2xl bg-[#121217] border border-zinc-800 space-y-4">
+                  <CvUpload
+                    value={content.profile.cvUrl || ""}
+                    onChange={(url) =>
+                      setContent({
+                        ...content,
+                        profile: { ...content.profile, cvUrl: url },
+                      })
+                    }
+                    showButton={content.profile.showCvButton !== false}
+                    onToggleShowButton={(show) =>
+                      setContent({
+                        ...content,
+                        profile: { ...content.profile, showCvButton: show },
+                      })
+                    }
+                  />
                 </div>
 
                 {/* Hero Headlines Dwibahasa */}

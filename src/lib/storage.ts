@@ -62,6 +62,8 @@ export interface PortfolioContent {
     linkedin: string;
     whatsapp: string;
     avatar?: string;
+    cvUrl?: string;
+    showCvButton?: boolean;
     headline: { id: string; en: string };
     subheadline: { id: string; en: string };
     bioP1?: { id: string; en: string };
@@ -112,6 +114,8 @@ export function getDefaultContent(): PortfolioContent {
       linkedin: siteConfig.linkedin,
       whatsapp: siteConfig.whatsapp,
       avatar: "/uploads/foto_wasit_satya-1791865121487.png",
+      cvUrl: "/uploads/CV_Gede_Satya_Budi_Dharma_Wiguna.pdf",
+      showCvButton: true,
       headline: {
         id: "Membangun sistem web skalavel & pengalaman digital elegan.",
         en: "Crafting high-performance web systems & elegant digital products.",

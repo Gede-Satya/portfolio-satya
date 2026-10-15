@@ -10,6 +10,8 @@
     "linkedin": "https://linkedin.com",
     "whatsapp": "https://wa.me/6281234567890",
     "avatar": "/uploads/foto_wasit_satya-1791865121487.png",
+    "cvUrl": "/uploads/CV_Gede_Satya_Budi_Dharma_Wiguna.pdf",
+    "showCvButton": true,
     "headline": {
       "id": "Membangun sistem web skalavel & pengalaman digital elegan.",
       "en": "Crafting high-performance web systems & elegant digital products."

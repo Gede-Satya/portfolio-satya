@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Sun, Moon, Menu, X, ArrowUpRight, Sparkles } from "lucide-react";
+import { Sun, Moon, Menu, X, ArrowUpRight, Sparkles, FileDown } from "lucide-react";
 import { Language } from "@/types/portfolio";
 import { PortfolioContent } from "@/lib/storage";
 import { siteConfig } from "@/data/portfolioData";
@@ -130,6 +130,21 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right Action Controls */}
           <div className="flex items-center gap-2.5">
+            {/* Unduh CV Desktop Pill */}
+            {profile?.cvUrl && profile?.showCvButton !== false && (
+              <a
+                href={profile.cvUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={profile.name ? `CV_${profile.name.replace(/\s+/g, "_")}.pdf` : "CV_Satya_Dharma.pdf"}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 transition-all hover:scale-[1.02]"
+                title={lang === "id" ? "Unduh Curriculum Vitae (PDF)" : "Download Resume (PDF)"}
+              >
+                <FileDown className="w-3.5 h-3.5" />
+                <span>CV</span>
+              </a>
+            )}
+
             {/* Language Switcher Pill */}
             <button
               onClick={onToggleLang}
@@ -163,7 +178,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Direct Contact Button */}
             <a
               href="#contact"
-              className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900 shadow-sm transition-all hover:scale-[1.02]"
+              className="hidden md:inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-zinc-100 dark:text-zinc-900 shadow-sm transition-all hover:scale-[1.02]"
             >
               <span>{lang === "id" ? "Hubungi Saya" : "Get in Touch"}</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
@@ -193,7 +208,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                 {link.label}
               </a>
             ))}
-            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+
+            <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-2">
+              {profile?.cvUrl && profile?.showCvButton !== false && (
+                <a
+                  href={profile.cvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={profile.name ? `CV_${profile.name.replace(/\s+/g, "_")}.pdf` : "CV_Satya_Dharma.pdf"}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold border border-indigo-500/30 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20"
+                >
+                  <FileDown className="w-4 h-4" />
+                  <span>{lang === "id" ? "Unduh CV (PDF)" : "Download Resume"}</span>
+                </a>
+              )}
+
               <a
                 href="#contact"
                 onClick={() => setMobileMenuOpen(false)}

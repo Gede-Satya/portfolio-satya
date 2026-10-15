@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Layout, Server, Cloud, Cpu, CheckCircle2 } from "lucide-react";
+import { Layout, Server, Cloud, Cpu, CheckCircle2, FileDown } from "lucide-react";
 import { Language } from "@/types/portfolio";
 import { AboutContent, PortfolioContent, PillarItem } from "@/lib/storage";
 
@@ -206,6 +206,26 @@ export const About: React.FC<AboutProps> = ({ lang, about, profile }) => {
                 </span>
               </div>
             </div>
+
+            {/* CV Download CTA */}
+            {profile?.cvUrl && profile?.showCvButton !== false && (
+              <div className="pt-2">
+                <a
+                  href={profile.cvUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  download={profile.name ? `CV_${profile.name.replace(/\s+/g, "_")}.pdf` : "CV_Satya_Dharma.pdf"}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-semibold text-xs transition-all hover:scale-[1.01] shadow-sm group"
+                >
+                  <FileDown className="w-4 h-4 text-indigo-500 group-hover:translate-y-0.5 transition-transform" />
+                  <span>
+                    {lang === "id"
+                      ? "Unduh Curriculum Vitae Lengkap (PDF)"
+                      : "Download Full Curriculum Vitae (PDF)"}
+                  </span>
+                </a>
+              </div>
+            )}
           </div>
 
           {/* Right Dynamic Pillars Cards */}
